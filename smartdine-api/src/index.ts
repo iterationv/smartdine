@@ -6,12 +6,11 @@ import {
   addFaq,
   deleteFaq,
   getFaqList,
-  getMatchedFaq,
   updateFaq,
   type CreateFaqInput,
   type UpdateFaqInput,
 } from './faq.js'
-import { askLLM } from './llm.js'
+import { retrieve } from './ai/retrieve.js'
 import { authMiddleware } from './middleware/auth.js'
 import { corsMiddleware } from './middleware/cors.js'
 import knowledgeRoutes from './routes/knowledge.js'
@@ -206,23 +205,15 @@ app.post('/chat', async (c) => {
   }
 
   try {
-    const matchedFaq = await getMatchedFaq(question)
-    const answer = await askLLM({
-      userQuestion: question,
-      matchedFaq: matchedFaq
-        ? {
-            question: matchedFaq.question,
-            answer: matchedFaq.answer,
-          }
-        : null,
-    })
+    const result = await retrieve(question)
 
     return jsonUtf8(c, {
-      answer,
-      matched: matchedFaq
+      answer: result.answer,
+      source: result.source,
+      matched: result.matched
         ? {
-            id: matchedFaq.id,
-            question: matchedFaq.question,
+            id: result.matched.id,
+            title: result.matched.title,
           }
         : null,
     })
