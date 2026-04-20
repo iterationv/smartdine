@@ -1,6 +1,7 @@
 import type { KnowledgeItem } from '../types/knowledge.js'
 import { generateAnswer } from './generateAnswer.js'
 import { matchKnowledge } from './matchKnowledge.js'
+import { saveQuestionLog } from './saveQuestionLog.js'
 
 export interface RetrieveResult {
   matched: KnowledgeItem | null
@@ -13,6 +14,13 @@ export async function retrieve(question: string): Promise<RetrieveResult> {
 
   if (matched) {
     const answer = await generateAnswer(question, matched)
+    await saveQuestionLog({
+      question,
+      matchedId: matched.id,
+      matchedTitle: matched.title,
+      source: 'knowledge',
+      answer,
+    })
 
     return {
       matched,
@@ -22,6 +30,13 @@ export async function retrieve(question: string): Promise<RetrieveResult> {
   }
 
   const answer = await generateAnswer(question, null)
+  await saveQuestionLog({
+    question,
+    matchedId: null,
+    matchedTitle: null,
+    source: 'ai_fallback',
+    answer,
+  })
 
   return {
     matched: null,
