@@ -15,6 +15,7 @@ import { askLLM } from './llm.js'
 import { authMiddleware } from './middleware/auth.js'
 import { corsMiddleware } from './middleware/cors.js'
 import knowledgeRoutes from './routes/knowledge.js'
+import logsRoutes from './routes/logs.js'
 
 const app = new Hono()
 
@@ -183,6 +184,7 @@ app.get('/health', (c) => {
 })
 
 app.route('/', knowledgeRoutes)
+app.route('/', logsRoutes)
 
 app.use('/chat', authMiddleware)
 app.use('/admin/faq', authMiddleware)
