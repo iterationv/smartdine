@@ -6,6 +6,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  error: {
+    type: String,
+    default: '',
+  },
 })
 
 const listRef = ref(null)
@@ -18,48 +26,29 @@ const scrollToBottom = () => {
   listRef.value.scrollTop = listRef.value.scrollHeight
 }
 
-const getAssistantTagMeta = (message) => {
-  if (message.status === 'loading') {
-    return {
-      label: '思考中',
-      tone: 'loading',
-    }
+const getSourceLabel = (source) => {
+  if (source === 'knowledge' || source === 'faq') {
+    return '✓ 来自知识库'
   }
 
-  if (message.status === 'error') {
-    return {
-      label: '请求失败',
-      tone: 'error',
-    }
+  if (source === 'ai_fallback') {
+    return '⚡ AI 回答'
   }
 
-  if (message.source === 'welcome') {
-    return {
-      label: '欢迎语',
-      tone: 'welcome',
-    }
-  }
+  return ''
+}
 
-  if (message.matched) {
-    return {
-      label: 'FAQ回答',
-      tone: 'faq',
-    }
-  }
-
-  return {
-    label: 'AI回答',
-    tone: 'ai',
-  }
+const isMissedAnswer = (message) => {
+  return message.source === 'ai_fallback' && message.matched === null
 }
 
 watch(
-  () => props.messages,
+  () => [props.messages.length, props.loading, props.error],
   async () => {
     await nextTick()
     scrollToBottom()
   },
-  { deep: true, immediate: true },
+  { immediate: true },
 )
 </script>
 
@@ -71,18 +60,34 @@ watch(
       class="message-row"
       :class="message.role === 'user' ? 'message-row--user' : 'message-row--assistant'"
     >
-      <div class="message-meta">
-        <p class="message-role">{{ message.role === 'user' ? '我' : 'AI' }}</p>
-        <span
-          v-if="message.role === 'assistant'"
-          class="message-tag"
-          :class="`message-tag--${getAssistantTagMeta(message).tone}`"
-        >
-          {{ getAssistantTagMeta(message).label }}
-        </span>
-      </div>
-      <div class="message-bubble" :class="message.role === 'user' ? 'message-bubble--user' : 'message-bubble--assistant'">
+      <div
+        v-if="message.role === 'user'"
+        class="message-bubble message-bubble--user"
+      >
         {{ message.content }}
+      </div>
+      <div v-else class="assistant-card">
+        <div v-if="isMissedAnswer(message)" class="assistant-alert">
+          未找到精确答案，以下仅供参考
+        </div>
+        <p class="assistant-content">{{ message.content }}</p>
+        <div v-if="getSourceLabel(message.source)" class="assistant-footer">
+          <span class="assistant-tag" :class="message.source === 'ai_fallback' ? 'assistant-tag--ai' : 'assistant-tag--knowledge'">
+            {{ getSourceLabel(message.source) }}
+          </span>
+        </div>
+      </div>
+    </article>
+
+    <article v-if="loading" class="message-row message-row--assistant">
+      <div class="assistant-card assistant-card--loading">
+        <p class="assistant-content">正在思考中...</p>
+      </div>
+    </article>
+
+    <article v-if="error" class="message-row message-row--assistant">
+      <div class="assistant-card assistant-card--error">
+        <p class="assistant-content">{{ error }}</p>
       </div>
     </article>
   </section>
@@ -103,15 +108,6 @@ watch(
 .message-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.message-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 4px;
 }
 
 .message-row--assistant {
@@ -120,51 +116,6 @@ watch(
 
 .message-row--user {
   align-items: flex-end;
-}
-
-.message-role {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.message-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  line-height: 1.4;
-  border: 1px solid transparent;
-}
-
-.message-tag--welcome {
-  background: #f2f4f7;
-  border-color: #dce3eb;
-  color: #52606d;
-}
-
-.message-tag--faq {
-  background: #e7f6ec;
-  border-color: #b9e2c7;
-  color: #1f7a45;
-}
-
-.message-tag--ai {
-  background: #e8f0ff;
-  border-color: #cfe0ff;
-  color: #2550a8;
-}
-
-.message-tag--loading {
-  background: #fff5db;
-  border-color: #f7de98;
-  color: #8a5a00;
-}
-
-.message-tag--error {
-  background: #fdeaea;
-  border-color: #f3c1c1;
-  color: #b42318;
 }
 
 .message-bubble {
@@ -192,6 +143,69 @@ watch(
   border-bottom-right-radius: 6px;
 }
 
+.assistant-card {
+  width: min(100%, 560px);
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #dde5f0;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+.assistant-card--loading {
+  background: #fffaf0;
+  border-color: #f5dfab;
+}
+
+.assistant-card--error {
+  background: #fff3f2;
+  border-color: #f3c1c1;
+}
+
+.assistant-alert {
+  margin: -2px -4px 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #fff4e6;
+  border: 1px solid #f6c78b;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #a85b00;
+}
+
+.assistant-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1f2937;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.assistant-footer {
+  margin-top: 12px;
+}
+
+.assistant-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.assistant-tag--knowledge {
+  background: #e7f6ec;
+  color: #1f7a45;
+}
+
+.assistant-tag--ai {
+  background: #edf3ff;
+  color: #2550a8;
+}
+
 @media (max-width: 480px) {
   .message-list {
     padding: 14px 14px 10px;
@@ -201,6 +215,15 @@ watch(
   .message-bubble {
     max-width: 88%;
     padding: 11px 13px;
+    font-size: 13px;
+  }
+
+  .assistant-card {
+    padding: 13px 14px;
+    border-radius: 18px;
+  }
+
+  .assistant-content {
     font-size: 13px;
   }
 }

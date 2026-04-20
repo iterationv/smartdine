@@ -1,96 +1,34 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { postChat } from '../api/chat'
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import InputBar from '../components/InputBar.vue'
 import MessageList from '../components/MessageList.vue'
+import { useChatStore } from '../stores/chatStore'
+import { useSuggestStore } from '../stores/suggestStore'
 
 const restaurantName = import.meta.env.VITE_RESTAURANT_NAME || 'SmartDine 餐厅'
 const restaurantLogo = import.meta.env.VITE_RESTAURANT_LOGO || ''
-const DEFAULT_ERROR_MESSAGE = '当前服务暂不可用，请稍后再试。'
+const placeholder = '试着问：今天有什么好吃的？'
+
+const chatStore = useChatStore()
+const suggestStore = useSuggestStore()
+const { messages, loading, error } = storeToRefs(chatStore)
+const { suggestions } = storeToRefs(suggestStore)
 
 const logoPlaceholder = computed(() => {
   const name = restaurantName.trim()
   return name ? name.slice(0, 2).toUpperCase() : 'SD'
 })
 
-const initialMessages = [
-  {
-    id: 'msg_001',
-    role: 'assistant',
-    content: `你好，欢迎来到${restaurantName}。你可以先问我营业时间、推荐菜品或用餐服务相关问题。`,
-    status: 'done',
-    matched: null,
-    source: 'welcome',
-  },
-]
+const hasMessages = computed(() => messages.value.length > 0)
+const showConversation = computed(() => hasMessages.value || loading.value || Boolean(error.value))
 
-const messages = ref([...initialMessages])
-let messageSeed = initialMessages.length
-
-const createMessage = (role, content, status = 'done', matched = null, source = null) => {
-  messageSeed += 1
-
-  return {
-    id: `msg_${String(messageSeed).padStart(3, '0')}`,
-    role,
-    content,
-    status,
-    matched,
-    source,
-  }
+const handleSend = (question) => {
+  chatStore.sendQuestion(question)
 }
 
-const updateMessage = (messageId, patch) => {
-  const targetIndex = messages.value.findIndex((message) => message.id === messageId)
-
-  if (targetIndex === -1) {
-    return
-  }
-
-  messages.value[targetIndex] = {
-    ...messages.value[targetIndex],
-    ...patch,
-  }
-}
-
-const handleSend = async (content) => {
-  const question = content.trim()
-
-  if (!question) {
-    return
-  }
-
-  messages.value.push(createMessage('user', question))
-
-  const pendingMessage = createMessage(
-    'assistant',
-    '正在为你整理答案，请稍候...',
-    'loading',
-    null,
-  )
-
-  messages.value.push(pendingMessage)
-
-  try {
-    const result = await postChat(question)
-
-    updateMessage(pendingMessage.id, {
-      content: result.answer,
-      status: 'done',
-      matched: result.matched,
-      source: result.matched ? 'faq' : 'ai',
-    })
-  } catch (error) {
-    updateMessage(pendingMessage.id, {
-      content:
-        error instanceof Error && error.message && error.message !== 'question is required'
-          ? error.message
-          : DEFAULT_ERROR_MESSAGE,
-      status: 'error',
-      matched: null,
-      source: 'error',
-    })
-  }
+const handleSuggestionClick = (question) => {
+  chatStore.sendQuestion(question)
 }
 </script>
 
@@ -110,9 +48,40 @@ const handleSend = async (content) => {
       <p class="brand-hint">扫码即可提问，支持菜品、营业时间和用餐服务咨询。</p>
     </header>
 
-    <MessageList :messages="messages" />
+    <section v-if="!showConversation" class="chat-empty">
+      <div class="welcome-card">
+        <p class="welcome-tag">今日推荐问法</p>
+        <h2>从这里开始提问</h2>
+        <p class="welcome-copy">
+          可以先问菜品、套餐、营业时间或饮食偏好，首页会优先展示常见问题入口。
+        </p>
+      </div>
 
-    <InputBar @send="handleSend" />
+      <div class="suggest-section">
+        <p class="suggest-title">推荐问题</p>
+        <div class="suggest-grid">
+          <button
+            v-for="question in suggestions"
+            :key="question"
+            type="button"
+            class="suggest-card"
+            :disabled="loading"
+            @click="handleSuggestionClick(question)"
+          >
+            {{ question }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <MessageList
+      v-else
+      :messages="messages"
+      :loading="loading"
+      :error="error || ''"
+    />
+
+    <InputBar :loading="loading" :placeholder="placeholder" @send="handleSend" />
   </main>
 </template>
 
@@ -192,6 +161,88 @@ const handleSend = async (content) => {
   color: #6b7280;
 }
 
+.chat-empty {
+  flex: 1;
+  min-height: 0;
+  padding: 20px 16px 12px;
+  overflow-y: auto;
+}
+
+.welcome-card {
+  padding: 18px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+  border: 1px solid #d6e1f4;
+  box-shadow: 0 14px 30px rgba(37, 80, 168, 0.08);
+}
+
+.welcome-tag {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #2f6fed;
+}
+
+.welcome-card h2 {
+  margin-top: 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.welcome-copy {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #5b6472;
+}
+
+.suggest-section {
+  margin-top: 20px;
+}
+
+.suggest-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.suggest-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.suggest-card {
+  min-height: 68px;
+  padding: 14px 16px;
+  border: 1px solid #d8e2f1;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.suggest-card:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #b7caea;
+  box-shadow: 0 16px 26px rgba(15, 23, 42, 0.08);
+}
+
+.suggest-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 @media (max-width: 480px) {
   .chat-header {
     padding: calc(16px + env(safe-area-inset-top)) 14px 12px;
@@ -213,6 +264,34 @@ const handleSend = async (content) => {
   .brand-hint {
     margin-top: 8px;
     font-size: 12px;
+  }
+
+  .chat-empty {
+    padding: 16px 14px 10px;
+  }
+
+  .welcome-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .welcome-card h2 {
+    font-size: 22px;
+  }
+
+  .welcome-copy {
+    font-size: 13px;
+  }
+
+  .suggest-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .suggest-card {
+    min-height: 60px;
+    padding: 12px 14px;
+    font-size: 13px;
   }
 }
 </style>

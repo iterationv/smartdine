@@ -1,10 +1,21 @@
 <script setup>
 import { computed, ref } from 'vue'
 
+const props = defineProps({
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  placeholder: {
+    type: String,
+    default: '试着问：今天有什么好吃的？',
+  },
+})
+
 const emit = defineEmits(['send'])
 const draft = ref('')
 
-const canSend = computed(() => draft.value.trim().length > 0)
+const canSend = computed(() => !props.loading && draft.value.trim().length > 0)
 
 const handleSend = () => {
   if (!canSend.value) {
@@ -23,12 +34,15 @@ const handleSend = () => {
         v-model="draft"
         type="text"
         class="message-input"
-        placeholder="请输入你的问题"
+        :placeholder="placeholder"
+        :disabled="loading"
         autocomplete="off"
         enterkeyhint="send"
         @keydown.enter.prevent="handleSend"
       />
-      <button type="button" class="send-button" :disabled="!canSend" @click="handleSend">发送</button>
+      <button type="button" class="send-button" :disabled="!canSend" @click="handleSend">
+        {{ loading ? '发送中' : '发送' }}
+      </button>
     </div>
   </footer>
 </template>
@@ -61,6 +75,12 @@ const handleSend = () => {
   background: #f8fafc;
   color: #111827;
   outline: none;
+}
+
+.message-input:disabled {
+  background: #edf2f7;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .message-input::placeholder {
