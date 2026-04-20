@@ -43,7 +43,7 @@ const handleFinish = async (values) => {
     return
   }
 
-  await router.replace('/faq')
+  await router.replace('/knowledge')
   isSubmitting.value = false
 }
 
@@ -57,7 +57,7 @@ const handleFinishFailed = () => {
     <a-col :xs="24" :sm="18" :md="14" :lg="10" :xl="8">
       <a-card class="page-card" title="管理员登录">
         <a-typography-paragraph>
-          当前为 V1 临时登录方案，仅用于进入 Admin 占位页面。
+          当前为 V1 临时登录方案，仅用于进入 Admin 页面进行联调与验收。
         </a-typography-paragraph>
         <a-typography-paragraph type="secondary">
           测试账号：admin / admin123

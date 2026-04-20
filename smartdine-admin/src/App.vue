@@ -4,8 +4,33 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
+const navItems = [
+  {
+    key: '/knowledge',
+    label: '知识管理',
+    to: '/knowledge',
+  },
+  {
+    key: '/missed',
+    label: '未命中问题',
+    to: '/missed',
+  },
+  {
+    key: '/faq',
+    label: 'FAQ 列表',
+    to: '/faq',
+  },
+  {
+    key: '/login',
+    label: '登录页',
+    to: '/login',
+  },
+]
+
 const currentSection = computed(() => {
-  return route.path.startsWith('/faq') ? '/faq' : '/login'
+  const matchedItem = navItems.find((item) => route.path.startsWith(item.key))
+
+  return matchedItem ? matchedItem.key : '/login'
 })
 </script>
 
@@ -14,22 +39,18 @@ const currentSection = computed(() => {
     <a-layout-header class="app-header">
       <div class="app-brand">
         <span class="app-title">SmartDine Admin</span>
-        <span class="app-subtitle">Phase 3 初始化占位工程</span>
+        <span class="app-subtitle">V1.1 P0 知识运营工作台</span>
       </div>
 
       <a-space wrap>
-        <RouterLink to="/login">
-          <a-button :type="currentSection === '/login' ? 'primary' : 'default'">
-            登录页
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.key"
+          :to="item.to"
+        >
+          <a-button :type="currentSection === item.key ? 'primary' : 'default'">
+            {{ item.label }}
           </a-button>
-        </RouterLink>
-        <RouterLink to="/faq">
-          <a-button :type="currentSection === '/faq' ? 'primary' : 'default'">
-            FAQ 列表
-          </a-button>
-        </RouterLink>
-        <RouterLink to="/faq/new">
-          <a-button>新建 FAQ</a-button>
         </RouterLink>
       </a-space>
     </a-layout-header>

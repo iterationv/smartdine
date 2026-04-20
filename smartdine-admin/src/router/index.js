@@ -2,17 +2,35 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/Login.vue'
 import FaqListView from '../views/Faq/List.vue'
 import FaqEditView from '../views/Faq/Edit.vue'
+import KnowledgeListView from '../views/KnowledgeList.vue'
+import MissedListView from '../views/MissedList.vue'
 import { isAdminAuthenticated } from '../utils/auth'
 
 const routes = [
   {
     path: '/',
-    redirect: '/login',
+    redirect: '/knowledge',
   },
   {
     path: '/login',
     name: 'login',
     component: LoginView,
+  },
+  {
+    path: '/knowledge',
+    name: 'knowledge-list',
+    component: KnowledgeListView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/missed',
+    name: 'missed-list',
+    component: MissedListView,
+    meta: {
+      requiresAuth: true,
+    },
   },
   {
     path: '/faq',
@@ -53,7 +71,7 @@ router.beforeEach((to) => {
   }
 
   if (to.path === '/login' && isLoggedIn) {
-    return '/faq'
+    return '/knowledge'
   }
 
   return true
