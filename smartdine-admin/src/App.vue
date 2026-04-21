@@ -6,6 +6,11 @@ const route = useRoute()
 
 const navItems = [
   {
+    key: '/dashboard',
+    label: '统计看板',
+    to: '/dashboard',
+  },
+  {
     key: '/knowledge',
     label: '知识管理',
     to: '/knowledge',

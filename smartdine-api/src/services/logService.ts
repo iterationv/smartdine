@@ -35,6 +35,18 @@ export interface ListMissedQuestionsResult {
   size: number
 }
 
+export type LogStatsRange = 'today' | '7d' | '30d'
+
+export interface LogStatsItem {
+  question: string
+  count: number
+}
+
+export interface LogStatsResult {
+  topQuestions: LogStatsItem[]
+  missedCount: number
+}
+
 function normalizePositiveInteger(value: unknown, fallbackValue: number): number {
   if (
     typeof value !== 'number' ||
@@ -108,6 +120,56 @@ function includesKeyword(value: string | null, keyword: string): boolean {
   return value.toLowerCase().includes(keyword)
 }
 
+function normalizeStatsRange(value: unknown): LogStatsRange {
+  if (value === 'today' || value === '7d' || value === '30d') {
+    return value
+  }
+
+  return '7d'
+}
+
+function getRangeStartTimestamp(range: LogStatsRange): number {
+  const now = new Date()
+  const startDate = new Date(now)
+
+  startDate.setHours(0, 0, 0, 0)
+
+  if (range === '7d') {
+    startDate.setDate(startDate.getDate() - 6)
+  }
+
+  if (range === '30d') {
+    startDate.setDate(startDate.getDate() - 29)
+  }
+
+  return startDate.getTime()
+}
+
+function buildTopQuestions(items: QuestionLog[]): LogStatsItem[] {
+  const counter = new Map<string, number>()
+
+  for (const item of items) {
+    const question = item.question.trim()
+
+    if (!question) {
+      continue
+    }
+
+    counter.set(question, (counter.get(question) ?? 0) + 1)
+  }
+
+  return [...counter.entries()]
+    .map(([question, count]) => ({ question, count }))
+    .sort((left, right) => {
+      if (right.count !== left.count) {
+        return right.count - left.count
+      }
+
+      return left.question.localeCompare(right.question, 'zh-CN')
+    })
+    .slice(0, 10)
+}
+
 export async function listQuestionLogs(
   params: ListQuestionLogsParams = {},
 ): Promise<ListQuestionLogsResult> {
@@ -173,5 +235,28 @@ export async function listMissedQuestions(
     total: filteredItems.length,
     page,
     size,
+  }
+}
+
+export async function getLogStats(
+  range: LogStatsRange | string = '7d',
+): Promise<LogStatsResult> {
+  const normalizedRange = normalizeStatsRange(range)
+  const startTimestamp = getRangeStartTimestamp(normalizedRange)
+  const endTimestamp = Date.now()
+  const items = await readQuestionLogs()
+  const filteredItems = items.filter((item) => {
+    const createdAtTimestamp = getCreatedAtTimestamp(item.createdAt)
+
+    return (
+      createdAtTimestamp >= startTimestamp &&
+      createdAtTimestamp <= endTimestamp
+    )
+  })
+
+  return {
+    topQuestions: buildTopQuestions(filteredItems),
+    missedCount: filteredItems.filter((item) => item.source === 'ai_fallback')
+      .length,
   }
 }

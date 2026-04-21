@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.js'
 import {
+  getLogStats,
   listMissedQuestions,
   listQuestionLogs,
 } from '../services/logService.js'
@@ -40,6 +41,23 @@ logsRoutes.get('/api/logs', async (c) => {
     return c.json(result)
   } catch (error) {
     console.error('Failed to list question logs:', error)
+
+    return c.json(
+      {
+        message: 'Internal server error',
+      },
+      500,
+    )
+  }
+})
+
+logsRoutes.get('/api/logs/stats', async (c) => {
+  try {
+    const result = await getLogStats(getOptionalQuery(c.req.query('range')))
+
+    return c.json(result)
+  } catch (error) {
+    console.error('Failed to load log stats:', error)
 
     return c.json(
       {

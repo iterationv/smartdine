@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/Login.vue'
+import DashboardView from '../views/Dashboard.vue'
 import FaqListView from '../views/Faq/List.vue'
 import FaqEditView from '../views/Faq/Edit.vue'
 import KnowledgeListView from '../views/KnowledgeList.vue'
@@ -15,6 +16,14 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView,
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: DashboardView,
+    meta: {
+      requiresAuth: true,
+    },
   },
   {
     path: '/knowledge',

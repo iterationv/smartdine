@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getMissedQuestions } from '../api/logs'
+import { getLogStats, getMissedQuestions } from '../api/logs'
 
 // 跨页面共享状态走 store；页面局部 UI 状态（如筛选器临时交互）留在组件内处理。
 export const useLogStore = defineStore('log', {
@@ -7,6 +7,10 @@ export const useLogStore = defineStore('log', {
     missedList: [],
     missedTotal: 0,
     loading: false,
+    statsLoading: false,
+    statsRange: '7d',
+    topQuestions: [],
+    missedCount: 0,
     filters: {
       keyword: '',
       dateRange: [],
@@ -38,6 +42,27 @@ export const useLogStore = defineStore('log', {
         return result
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchStats(range) {
+      const nextRange =
+        range === 'today' || range === '7d' || range === '30d'
+          ? range
+          : this.statsRange
+
+      this.statsLoading = true
+      this.statsRange = nextRange
+
+      try {
+        const result = await getLogStats(nextRange)
+
+        this.topQuestions = result.topQuestions
+        this.missedCount = result.missedCount
+
+        return result
+      } finally {
+        this.statsLoading = false
       }
     },
   },

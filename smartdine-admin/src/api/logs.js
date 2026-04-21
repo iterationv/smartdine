@@ -2,7 +2,9 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:300
 const API_SECRET = import.meta.env.VITE_API_SECRET || ''
 
 const MISSED_LOGS_ENDPOINT = `${API_BASE_URL}/api/logs/missed`
+const LOG_STATS_ENDPOINT = `${API_BASE_URL}/api/logs/stats`
 const MISSED_ERROR_MESSAGE = '未命中问题列表加载失败，请稍后重试。'
+const STATS_ERROR_MESSAGE = '统计数据加载失败，请稍后重试。'
 
 const getErrorMessage = (payload, fallbackMessage) => {
   if (payload && typeof payload.message === 'string' && payload.message.trim()) {
@@ -64,6 +66,10 @@ const normalizeMissedItem = (item, index) => {
   }
 }
 
+const normalizeStatsRange = (range) => {
+  return range === 'today' || range === '7d' || range === '30d' ? range : '7d'
+}
+
 export const getMissedQuestions = async (params = {}) => {
   const query = new URLSearchParams()
 
@@ -98,5 +104,46 @@ export const getMissedQuestions = async (params = {}) => {
     total: Number.isInteger(data.total) ? data.total : 0,
     page: Number.isInteger(data.page) ? data.page : params.page || 1,
     size: Number.isInteger(data.size) ? data.size : params.size || 20,
+  }
+}
+
+export const getLogStats = async (range = '7d') => {
+  const query = new URLSearchParams()
+  query.set('range', normalizeStatsRange(range))
+
+  let response
+
+  try {
+    response = await fetch(`${LOG_STATS_ENDPOINT}?${query.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_SECRET,
+      },
+    })
+  } catch {
+    throw new Error(STATS_ERROR_MESSAGE)
+  }
+
+  const data = await parseResponse(response, STATS_ERROR_MESSAGE)
+
+  if (!data || !Array.isArray(data.topQuestions)) {
+    throw new Error(STATS_ERROR_MESSAGE)
+  }
+
+  return {
+    topQuestions: data.topQuestions
+      .map((item) => {
+        if (!item || typeof item !== 'object') {
+          return null
+        }
+
+        return {
+          question: typeof item.question === 'string' ? item.question.trim() : '',
+          count: Number.isInteger(item.count) ? item.count : 0,
+        }
+      })
+      .filter((item) => item && item.question),
+    missedCount: Number.isInteger(data.missedCount) ? data.missedCount : 0,
   }
 }
