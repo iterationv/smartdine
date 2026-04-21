@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from 'hono'
 import { appConfig } from '../config.js'
 
-const ALLOW_METHODS = 'GET,POST,PUT,DELETE,OPTIONS'
+const ALLOW_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
 const ALLOW_HEADERS = 'Content-Type,x-api-key'
 
 const getAllowedOrigin = (origin: string | undefined): string | null => {

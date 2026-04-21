@@ -18,12 +18,20 @@ const normalizeMatched = (matched) => {
   if (
     typeof matched === 'object' &&
     typeof matched.id === 'string' &&
-    typeof matched.question === 'string'
+    typeof matched.title === 'string'
   ) {
     return {
       id: matched.id,
-      question: matched.question,
+      title: matched.title,
     }
+  }
+
+  throw new Error(SERVICE_ERROR_MESSAGE)
+}
+
+const normalizeSource = (source) => {
+  if (source === 'knowledge' || source === 'faq' || source === 'ai_fallback') {
+    return source
   }
 
   throw new Error(SERVICE_ERROR_MESSAGE)
@@ -71,6 +79,7 @@ export const postChat = async (question) => {
 
   return {
     answer: data.answer,
+    source: normalizeSource(data.source),
     matched: normalizeMatched(data.matched),
   }
 }
