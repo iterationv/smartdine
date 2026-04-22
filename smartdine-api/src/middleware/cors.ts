@@ -16,9 +16,13 @@ const getAllowedOrigin = (origin: string | undefined): string | null => {
   return null
 }
 
-const applyCorsHeaders = (response: Response, origin: string | undefined) => {
+const applyCorsHeaders = (response: Response, origin: string | undefined, isPrivateNetwork = false) => {
   response.headers.set('Access-Control-Allow-Methods', ALLOW_METHODS)
   response.headers.set('Access-Control-Allow-Headers', ALLOW_HEADERS)
+
+  if (isPrivateNetwork) {
+    response.headers.set('Access-Control-Allow-Private-Network', 'true')
+  }
 
   const allowedOrigin = getAllowedOrigin(origin)
 
@@ -33,10 +37,11 @@ const applyCorsHeaders = (response: Response, origin: string | undefined) => {
 
 export const corsMiddleware: MiddlewareHandler = async (c, next) => {
   const origin = c.req.header('origin')
+  const isPrivateNetwork = c.req.header('access-control-request-private-network') === 'true'
 
   if (c.req.method === 'OPTIONS') {
     const response = new Response(null, { status: 204 })
-    applyCorsHeaders(response, origin)
+    applyCorsHeaders(response, origin, isPrivateNetwork)
 
     return response
   }
