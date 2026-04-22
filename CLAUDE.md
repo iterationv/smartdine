@@ -35,9 +35,21 @@ smartdine/
 ├── GIT_RULES_CLAUDE.md        ← Claude Code Git 专项规范
 ├── README.md                  ← 启动说明 / 双环境 / FAQ 数据隔离
 ├── smartdine-word/            ← 规划文档、任务清单（不含业务代码）
+│   ├── SmartDine项目规划文档.md
 │   ├── SmartDine_V1.1_规划文档.md
 │   ├── SmartDine_V1.1_任务清单.md
-│   └── SmartDine_V1.1_P0_详细任务清单_Spec模板.md
+│   ├── SmartDine_V1.1_P0_Codex开发执行任务清单.md
+│   ├── SmartDine_V1.1_P1_Codex开发执行任务清单.md
+│   ├── SmartDine_V1.1_P1_文档级任务清单.md
+│   ├── SmartDine_V1_Codex开发执行任务清单.md
+│   ├── SmartDine_指令包复盘与阻塞处理规范.md
+│   └── archive/               ← 已归档旧文档
+│       ├── SmartDine_V1.1_P1_Codex开发执行任务清单(初稿）.md
+│       ├── V1.1_AGENTS.md
+│       ├── V1.2_AGENTS.md
+│       ├── V1_AGENTS.md
+│       ├── V1_Phase3_Admin_完成归档.md
+│       └── V1_Phase4_生产化准备清单.md
 ├── smartdine-api/
 │   └── src/
 │       ├── index.ts           ← 入口 / 路由注册
@@ -117,6 +129,10 @@ V1.1 P0 产品骨架建设        ✅ 完成（已验收）
      └─ 验收（≥80% 命中率，≤5min 未命中可见）✅
 ─────────────────────────────────────────────
 V1.1 P1 产品骨架完善        ⏳ 进行中（当前阶段）
+     ├─ 执行包 A：后端检索增强（Query Rewrite / BM25 / Rerank / 向量预留 / 工程清理）⏳
+     ├─ 执行包 B：Admin 运营闭环（Dashboard 趋势图 / 未命中转知识 / handled 字段）📋
+     └─ 执行包 C：H5 场景优化（推荐问题接口化 / 分类 Tab / 相关推荐 / 结果页预留）📋
+─────────────────────────────────────────────
 V1.1 P2 深化方向            📋 预留，不进入当前交付
 ```
 
@@ -127,7 +143,7 @@ V1.1 P2 深化方向            📋 预留，不进入当前交付
 **所有开发（人工 + AI）在每次任务开始前必须阅读 [AGENTS.md](AGENTS.md)。**
 
 AGENTS.md 包含：
-- 启动必读文档顺序
+- 文档读取策略（按需读取）
 - 当前阶段与禁止范围边界
 - 技术约束（H5 禁止 TS、API env 必须走 config.ts 等）
 - 双环境端口规范与检查流程
