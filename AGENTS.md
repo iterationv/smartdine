@@ -271,17 +271,25 @@ Body:   { "question": "..." }
 - Admin：`smartdine-admin/.env.ai` → `npm run dev:ai` → `5274`
 - H5：`smartdine-h5/.env.ai` → `npm run dev:ai` → `5273`
 
-### 6.3 默认规则
+### 6.3 Claude Code 开发环境
+- API：`smartdine-api/.env.cc` → `npm run dev:cc` → `3301`
+- Admin：`smartdine-admin/.env.cc` → `npm run dev:cc` → `5275`
+- H5：`smartdine-h5/.env.cc` → `npm run dev:cc` → `5276`
+
+> Claude Code 专用环境，端口独立于 dev:ai。Codex / 其他 AI 使用 dev:ai（3300/5274/5273），Claude Code 使用 dev:cc（3301/5275/5276），两套 AI 环境可同时运行不冲突。
+
+### 6.4 默认规则
 - 纯本地开发调试：默认开发环境
 - AI 自动测试 / Codex 验收 / 分步开发验证：默认 AI 测试环境
+- Claude Code 专用任务：默认 Claude Code 开发环境（dev:cc）
 - 禁止混用端口口径
 - 涉及真实知识 / 日志写入验证时，优先使用 AI 测试环境，避免污染默认数据
 
-### 6.4 额外说明
+### 6.5 额外说明
 - 根目录不能直接执行 `npm run dev` 或 `npm run dev:ai`
 - 三端必须分别进入各自目录启动
 - 启动前统一使用 `127.0.0.1`
-- `.env.ai` 属于受保护文件，只允许读取验证，不允许擅自修改
+- `.env.ai` / `.env.cc` 属于受保护文件，只允许读取验证，不允许擅自修改
 
 ---
 
@@ -290,6 +298,7 @@ Body:   { "question": "..." }
 先判断本任务运行环境：
 
 - 若用户、README、当前任务说明已明确指定环境 → 以指定环境为准
+- 若为 Claude Code 专用任务 → 默认 Claude Code 开发环境（dev:cc，端口 3301/5275/5276）
 - 若任务属于 AI 自动测试 / 验收 / Codex 分步开发验证 → 默认 AI 测试环境
 - 若只是日常人工开发调试 → 默认开发环境
 
@@ -343,7 +352,28 @@ curl -X POST http://127.0.0.1:3300/chat   -H "Content-Type: application/json"   
 curl -X OPTIONS http://127.0.0.1:3300/chat   -H "Origin: http://127.0.0.1:5273"   -H "Access-Control-Request-Method: POST" -v
 ```
 
-### 7.4 覆盖规则
+### 7.4 Claude Code 开发环境检查
+
+```bash
+# 1. 环境文件
+ls smartdine-api/.env.cc && ls smartdine-h5/.env.cc && ls smartdine-admin/.env.cc
+
+# 2. 服务存活
+curl http://127.0.0.1:3301/health
+
+# 3. 接口连通
+curl -X POST http://127.0.0.1:3301/chat \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $API_SECRET" \
+  -d '{"question":"测试"}'
+
+# 4. CORS（H5 联调时）
+curl -X OPTIONS http://127.0.0.1:3301/chat \
+  -H "Origin: http://127.0.0.1:5276" \
+  -H "Access-Control-Request-Method: POST" -v
+```
+
+### 7.5 覆盖规则
 
 - 如果 AGENTS 的通用检查口径，与 README 或当前任务已明确指定的运行环境冲突：
   - 以**当前任务明确环境**为准

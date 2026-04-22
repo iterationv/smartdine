@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:ai": "node --env-file=.env.ai ./node_modules/tsx/dist/cli.mjs watch src/index.ts",
+    "dev:cc": "node --env-file=.env.cc ./node_modules/tsx/dist/cli.mjs watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },

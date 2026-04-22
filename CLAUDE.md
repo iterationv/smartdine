@@ -109,6 +109,21 @@ cd smartdine-admin && npm run dev:ai
 
 > 禁止混用两套环境的端口。AI 测试环境读取各端的 `.env.ai` 文件，避免污染生产数据。
 
+### Claude Code 开发环境（dev:cc）
+
+```bash
+# API — 端口 3301
+cd smartdine-api && npm run dev:cc
+
+# H5 — 端口 5276
+cd smartdine-h5 && npm run dev:cc
+
+# Admin — 端口 5275
+cd smartdine-admin && npm run dev:cc
+```
+
+> Claude Code 专用环境，读取各端 `.env.cc` 文件。端口独立于 dev（3000/5173/5174）和 dev:ai（3300/5273/5274），三套环境可同时运行不冲突。Codex / 其他 AI 使用 dev:ai；Claude Code 使用 dev:cc。
+
 ---
 
 ## 6. 当前开发进度
