@@ -24,6 +24,12 @@ export async function readKnowledgeList(): Promise<KnowledgeItem[]> {
   }
 }
 
+export async function readActiveKnowledgeList(): Promise<KnowledgeItem[]> {
+  const items = await readKnowledgeList()
+
+  return items.filter((item) => item.status === 'active')
+}
+
 export async function writeKnowledgeList(items: KnowledgeItem[]): Promise<void> {
   const content = JSON.stringify(items, null, 2)
 

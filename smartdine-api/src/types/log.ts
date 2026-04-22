@@ -1,3 +1,5 @@
+import type { RetrievalTrace } from './retrieval.js'
+
 export type QuestionLogSource = 'knowledge' | 'faq' | 'ai_fallback'
 
 export interface QuestionLog {
@@ -7,6 +9,7 @@ export interface QuestionLog {
   matchedTitle: string | null
   source: QuestionLogSource
   answer: string
+  retrieval?: RetrievalTrace
   createdAt: string
 }
 

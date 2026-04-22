@@ -9,6 +9,7 @@ import type {
   QuestionLog,
   QuestionLogSource,
 } from '../types/log.js'
+import type { RetrievalTrace } from '../types/retrieval.js'
 
 export interface SaveQuestionLogParams {
   question: string
@@ -16,6 +17,7 @@ export interface SaveQuestionLogParams {
   matchedTitle?: string | null
   source: QuestionLogSource
   answer: string
+  retrieval?: RetrievalTrace
 }
 
 function createLogId(): string {
@@ -38,6 +40,7 @@ export async function saveQuestionLog(
     matchedTitle: params.matchedTitle ?? null,
     source: params.source,
     answer: params.answer,
+    retrieval: params.retrieval,
     createdAt,
   }
 

@@ -113,31 +113,11 @@ smartdine-api/src/data/questionLogs.json
 smartdine-api/src/data/missedQuestions.json
 ```
 
-### 过渡期规则（当前有效，至 P1 包 A 收口前）
+### 已通过 `.gitignore` 忽略
 
-1. **这两个文件不进入任何 commit**，即使 `git status` 显示为已修改
-2. 每次准备提交前，必须先恢复：
-   ```bash
-   git restore smartdine-api/src/data/questionLogs.json
-   git restore smartdine-api/src/data/missedQuestions.json
-   ```
-3. 以上恢复步骤包含在执行包收口流程的 `git status --short` 清理步骤中，无需单独提醒
-
-### P1 包 A 收口时执行
-
-在 P1 执行包 A 的收口阶段，顺带完成以下工程清理：
-
-```bash
-# 将两个运行时文件移出 git tracking
-git rm --cached smartdine-api/src/data/questionLogs.json
-git rm --cached smartdine-api/src/data/missedQuestions.json
-
-# 加入 .gitignore
-echo "smartdine-api/src/data/questionLogs.json" >> .gitignore
-echo "smartdine-api/src/data/missedQuestions.json" >> .gitignore
-```
-
-完成后更新本节，删除"过渡期规则"，改为"已通过 .gitignore 忽略"。
+1. 这两个文件已在仓库根目录 `.gitignore` 中声明为运行时数据文件
+2. P1 执行包 A 收口时通过 `git rm --cached` 将其移出 git tracking，后续联调写入不再产生持续脏改动
+3. 提交前仍需执行 `git status --short`，确认没有把其他运行期产物带入本次提交
 
 > 禁止手工修改这两个文件制造样本；只能通过真实 `/chat` 接口调用产生日志。
 
