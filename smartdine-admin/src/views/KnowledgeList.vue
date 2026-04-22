@@ -1,10 +1,15 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useKnowledgeStore } from '../stores/knowledgeStore'
+import { useLogStore } from '../stores/logStore'
 
+const route = useRoute()
+const router = useRouter()
 const knowledgeStore = useKnowledgeStore()
+const logStore = useLogStore()
 const { list, total, loading, filters, currentPage, pageSize } = storeToRefs(knowledgeStore)
 
 const pageError = ref('')
@@ -15,6 +20,8 @@ const submittingMode = ref('create')
 const editingId = ref('')
 const deletingId = ref('')
 const statusLoadingId = ref('')
+const sourceMissedId = ref('')
+const activeCreateRouteKey = ref('')
 const formModel = reactive({
   title: '',
   question: '',
@@ -114,6 +121,10 @@ const resetForm = () => {
   editingId.value = ''
 }
 
+const normalizeRouteQueryValue = (value) => {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
 const truncateText = (value, maxLength = 30) => {
   if (typeof value !== 'string') {
     return ''
@@ -152,6 +163,35 @@ onMounted(() => {
   loadKnowledgeList()
 })
 
+const syncCreateIntentFromRoute = () => {
+  if (route.name !== 'knowledge-create') {
+    return
+  }
+
+  const question = normalizeRouteQueryValue(route.query.question)
+  const missedId = normalizeRouteQueryValue(route.query.missedId)
+  const routeKey = `${route.name}:${question}:${missedId}`
+
+  if (activeCreateRouteKey.value === routeKey && modalOpen.value) {
+    return
+  }
+
+  activeCreateRouteKey.value = routeKey
+  submittingMode.value = 'create'
+  resetForm()
+  formModel.question = question
+  sourceMissedId.value = missedId
+  modalOpen.value = true
+}
+
+watch(
+  () => [route.name, route.query.question, route.query.missedId],
+  () => {
+    syncCreateIntentFromRoute()
+  },
+  { immediate: true },
+)
+
 const handleSearch = async () => {
   knowledgeStore.currentPage = 1
   await loadKnowledgeList()
@@ -168,11 +208,13 @@ const handleResetFilters = async () => {
 const openCreateModal = () => {
   submittingMode.value = 'create'
   resetForm()
+  sourceMissedId.value = ''
   modalOpen.value = true
 }
 
 const openEditModal = (record) => {
   submittingMode.value = 'edit'
+  sourceMissedId.value = ''
   editingId.value = record.id
   formModel.title = record.title || ''
   formModel.question = record.question || ''
@@ -183,11 +225,18 @@ const openEditModal = (record) => {
   modalOpen.value = true
 }
 
-const closeModal = () => {
+const closeModal = async () => {
   modalOpen.value = false
   submitLoading.value = false
   resetForm()
+  sourceMissedId.value = ''
   formRef.value?.clearValidate?.()
+
+  if (route.name === 'knowledge-create') {
+    await router.replace({ name: 'knowledge-list' })
+  }
+
+  activeCreateRouteKey.value = ''
 }
 
 const handleSubmit = async () => {
@@ -212,13 +261,34 @@ const handleSubmit = async () => {
 
     if (submittingMode.value === 'create') {
       await knowledgeStore.createItem(payload)
-      message.success('知识条目新增成功')
+      let createSuccessMessage = '知识条目新增成功'
+
+      if (sourceMissedId.value) {
+        try {
+          await logStore.updateMissedStatus(sourceMissedId.value, {
+            convertedToKnowledge: true,
+            handled: true,
+          })
+          createSuccessMessage = '知识条目新增成功，未命中问题已标记为已转化'
+        } catch (statusError) {
+          const nextMessage =
+            statusError instanceof Error && statusError.message
+              ? `知识条目新增成功，但未命中状态回写失败：${statusError.message}`
+              : '知识条目新增成功，但未命中状态回写失败，请稍后在未命中列表重试。'
+
+          await closeModal()
+          message.warning(nextMessage)
+          return
+        }
+      }
+
+      message.success(createSuccessMessage)
     } else {
       await knowledgeStore.updateItem(editingId.value, payload)
       message.success('知识条目编辑成功')
     }
 
-    closeModal()
+    await closeModal()
   } catch (error) {
     const nextMessage =
       error instanceof Error && error.message

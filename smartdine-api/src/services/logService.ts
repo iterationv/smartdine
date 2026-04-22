@@ -1,6 +1,7 @@
 import {
   readMissedQuestions,
   readQuestionLogs,
+  updateMissedQuestion,
 } from '../data/logStore.js'
 import type { MissedQuestion, QuestionLog } from '../types/log.js'
 
@@ -26,6 +27,7 @@ export interface ListMissedQuestionsParams {
   keyword?: string
   startDate?: string
   endDate?: string
+  handled?: boolean
 }
 
 export interface ListMissedQuestionsResult {
@@ -36,15 +38,35 @@ export interface ListMissedQuestionsResult {
 }
 
 export type LogStatsRange = 'today' | '7d' | '30d'
+export type LogStatsGranularity = 'hour' | 'day'
 
 export interface LogStatsItem {
   question: string
   count: number
 }
 
+export interface LogStatsTrendPoint {
+  key: string
+  label: string
+  total: number
+  hit: number
+  missed: number
+  hitRate: number
+}
+
 export interface LogStatsResult {
   topQuestions: LogStatsItem[]
+  totalQuestions: number
+  hitCount: number
   missedCount: number
+  hitRate: number
+  granularity: LogStatsGranularity
+  trend: LogStatsTrendPoint[]
+}
+
+export interface UpdateMissedQuestionStatusInput {
+  handled?: boolean
+  convertedToKnowledge?: boolean
 }
 
 function normalizePositiveInteger(value: unknown, fallbackValue: number): number {
@@ -170,6 +192,135 @@ function buildTopQuestions(items: QuestionLog[]): LogStatsItem[] {
     .slice(0, 10)
 }
 
+function padNumber(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+function getTrendWindow(range: LogStatsRange): {
+  startTimestamp: number
+  endTimestamp: number
+  granularity: LogStatsGranularity
+  points: Array<{ key: string; label: string }>
+} {
+  const now = new Date()
+  const endTimestamp = Date.now()
+
+  if (range === 'today') {
+    const startDate = new Date(now)
+    startDate.setHours(0, 0, 0, 0)
+    const points = Array.from({ length: now.getHours() + 1 }, (_, index) => ({
+      key: `${startDate.getFullYear()}-${padNumber(startDate.getMonth() + 1)}-${padNumber(startDate.getDate())}T${padNumber(index)}`,
+      label: `${padNumber(index)}:00`,
+    }))
+
+    return {
+      startTimestamp: startDate.getTime(),
+      endTimestamp,
+      granularity: 'hour',
+      points,
+    }
+  }
+
+  const dayCount = range === '30d' ? 30 : 7
+  const startDate = new Date(now)
+  startDate.setHours(0, 0, 0, 0)
+  startDate.setDate(startDate.getDate() - (dayCount - 1))
+
+  const points = Array.from({ length: dayCount }, (_, index) => {
+    const bucketDate = new Date(startDate)
+    bucketDate.setDate(startDate.getDate() + index)
+
+    return {
+      key: `${bucketDate.getFullYear()}-${padNumber(bucketDate.getMonth() + 1)}-${padNumber(bucketDate.getDate())}`,
+      label: `${padNumber(bucketDate.getMonth() + 1)}-${padNumber(bucketDate.getDate())}`,
+    }
+  })
+
+  return {
+    startTimestamp: startDate.getTime(),
+    endTimestamp,
+    granularity: 'day',
+    points,
+  }
+}
+
+function getTrendBucketKey(
+  date: Date,
+  granularity: LogStatsGranularity,
+): string {
+  const year = date.getFullYear()
+  const month = padNumber(date.getMonth() + 1)
+  const day = padNumber(date.getDate())
+
+  if (granularity === 'hour') {
+    return `${year}-${month}-${day}T${padNumber(date.getHours())}`
+  }
+
+  return `${year}-${month}-${day}`
+}
+
+function buildTrend(
+  items: QuestionLog[],
+  range: LogStatsRange,
+): Pick<LogStatsResult, 'granularity' | 'trend'> {
+  const { startTimestamp, endTimestamp, granularity, points } =
+    getTrendWindow(range)
+  const bucketMap = new Map(
+    points.map((point) => [
+      point.key,
+      {
+        ...point,
+        total: 0,
+        hit: 0,
+        missed: 0,
+        hitRate: 0,
+      },
+    ]),
+  )
+
+  for (const item of items) {
+    const createdAtTimestamp = getCreatedAtTimestamp(item.createdAt)
+
+    if (
+      createdAtTimestamp < startTimestamp ||
+      createdAtTimestamp > endTimestamp
+    ) {
+      continue
+    }
+
+    const bucketKey = getTrendBucketKey(
+      new Date(createdAtTimestamp),
+      granularity,
+    )
+    const bucket = bucketMap.get(bucketKey)
+
+    if (!bucket) {
+      continue
+    }
+
+    bucket.total += 1
+
+    if (item.source === 'ai_fallback') {
+      bucket.missed += 1
+    } else {
+      bucket.hit += 1
+    }
+  }
+
+  const trend = [...bucketMap.values()].map((point) => ({
+    ...point,
+    hitRate:
+      point.total === 0
+        ? 0
+        : Number(((point.hit / point.total) * 100).toFixed(1)),
+  }))
+
+  return {
+    granularity,
+    trend,
+  }
+}
+
 export async function listQuestionLogs(
   params: ListQuestionLogsParams = {},
 ): Promise<ListQuestionLogsResult> {
@@ -227,6 +378,13 @@ export async function listMissedQuestions(
       return false
     }
 
+    if (
+      typeof params.handled === 'boolean' &&
+      item.handled !== params.handled
+    ) {
+      return false
+    }
+
     return true
   })
 
@@ -243,20 +401,53 @@ export async function getLogStats(
 ): Promise<LogStatsResult> {
   const normalizedRange = normalizeStatsRange(range)
   const startTimestamp = getRangeStartTimestamp(normalizedRange)
-  const endTimestamp = Date.now()
   const items = await readQuestionLogs()
   const filteredItems = items.filter((item) => {
     const createdAtTimestamp = getCreatedAtTimestamp(item.createdAt)
 
-    return (
-      createdAtTimestamp >= startTimestamp &&
-      createdAtTimestamp <= endTimestamp
-    )
+    return createdAtTimestamp >= startTimestamp && createdAtTimestamp <= Date.now()
   })
+  const missedCount = filteredItems.filter((item) => item.source === 'ai_fallback')
+    .length
+  const hitCount = filteredItems.length - missedCount
+  const { granularity, trend } = buildTrend(items, normalizedRange)
 
   return {
     topQuestions: buildTopQuestions(filteredItems),
-    missedCount: filteredItems.filter((item) => item.source === 'ai_fallback')
-      .length,
+    totalQuestions: filteredItems.length,
+    hitCount,
+    missedCount,
+    hitRate:
+      filteredItems.length === 0
+        ? 0
+        : Number(((hitCount / filteredItems.length) * 100).toFixed(1)),
+    granularity,
+    trend,
   }
+}
+
+export async function updateMissedQuestionStatus(
+  id: string,
+  input: UpdateMissedQuestionStatusInput,
+): Promise<MissedQuestion> {
+  const normalizedId = id.trim()
+
+  if (!normalizedId) {
+    throw new Error('Missed question id is required.')
+  }
+
+  if (
+    input.handled === undefined &&
+    input.convertedToKnowledge === undefined
+  ) {
+    throw new Error('At least one status field is required.')
+  }
+
+  return updateMissedQuestion(normalizedId, {
+    handled:
+      input.convertedToKnowledge === true
+        ? true
+        : input.handled,
+    convertedToKnowledge: input.convertedToKnowledge,
+  })
 }

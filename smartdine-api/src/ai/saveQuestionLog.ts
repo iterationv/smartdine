@@ -53,6 +53,7 @@ export async function saveQuestionLog(
       question: params.question,
       createdAt,
       convertedToKnowledge: false,
+      handled: false,
     }
 
     await writeMissedQuestions([...missedQuestions, newMissedQuestion])

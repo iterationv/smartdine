@@ -4,6 +4,7 @@ const API_SECRET = import.meta.env.VITE_API_SECRET || ''
 const MISSED_LOGS_ENDPOINT = `${API_BASE_URL}/api/logs/missed`
 const LOG_STATS_ENDPOINT = `${API_BASE_URL}/api/logs/stats`
 const MISSED_ERROR_MESSAGE = '未命中问题列表加载失败，请稍后重试。'
+const UPDATE_MISSED_ERROR_MESSAGE = '未命中问题状态更新失败，请稍后重试。'
 const STATS_ERROR_MESSAGE = '统计数据加载失败，请稍后重试。'
 
 const getErrorMessage = (payload, fallbackMessage) => {
@@ -63,6 +64,7 @@ const normalizeMissedItem = (item, index) => {
     question: typeof item.question === 'string' ? item.question.trim() : '',
     createdAt: typeof item.createdAt === 'string' ? item.createdAt : '',
     convertedToKnowledge: item.convertedToKnowledge === true,
+    handled: item.handled === true,
   }
 }
 
@@ -91,6 +93,14 @@ export const getMissedQuestions = async (params = {}) => {
 
   if (typeof params.endDate === 'string' && params.endDate.trim()) {
     query.set('endDate', params.endDate.trim())
+  }
+
+  if (params.handled === true) {
+    query.set('handled', 'true')
+  }
+
+  if (params.handled === false) {
+    query.set('handled', 'false')
   }
 
   const data = await requestMissedLogs(query.toString())
@@ -144,6 +154,80 @@ export const getLogStats = async (range = '7d') => {
         }
       })
       .filter((item) => item && item.question),
+    totalQuestions: Number.isInteger(data.totalQuestions) ? data.totalQuestions : 0,
+    hitCount: Number.isInteger(data.hitCount) ? data.hitCount : 0,
     missedCount: Number.isInteger(data.missedCount) ? data.missedCount : 0,
+    hitRate: typeof data.hitRate === 'number' ? data.hitRate : 0,
+    granularity: data.granularity === 'hour' ? 'hour' : 'day',
+    trend: Array.isArray(data.trend)
+      ? data.trend
+          .map((item, index) => {
+            if (!item || typeof item !== 'object') {
+              return null
+            }
+
+            return {
+              key:
+                typeof item.key === 'string' && item.key.trim()
+                  ? item.key.trim()
+                  : `trend_${index}`,
+              label:
+                typeof item.label === 'string' && item.label.trim()
+                  ? item.label.trim()
+                  : '-',
+              total: Number.isFinite(item.total) ? Number(item.total) : 0,
+              hit: Number.isFinite(item.hit) ? Number(item.hit) : 0,
+              missed: Number.isFinite(item.missed) ? Number(item.missed) : 0,
+              hitRate: Number.isFinite(item.hitRate) ? Number(item.hitRate) : 0,
+            }
+          })
+          .filter(Boolean)
+      : [],
   }
+}
+
+export const updateMissedQuestion = async (id, input = {}) => {
+  const normalizedId = typeof id === 'string' ? id.trim() : ''
+
+  if (!normalizedId) {
+    throw new Error(UPDATE_MISSED_ERROR_MESSAGE)
+  }
+
+  const body = {}
+
+  if (typeof input.handled === 'boolean') {
+    body.handled = input.handled
+  }
+
+  if (typeof input.convertedToKnowledge === 'boolean') {
+    body.convertedToKnowledge = input.convertedToKnowledge
+  }
+
+  if (Object.keys(body).length === 0) {
+    throw new Error(UPDATE_MISSED_ERROR_MESSAGE)
+  }
+
+  let response
+
+  try {
+    response = await fetch(`${MISSED_LOGS_ENDPOINT}/${encodeURIComponent(normalizedId)}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_SECRET,
+      },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    throw new Error(UPDATE_MISSED_ERROR_MESSAGE)
+  }
+
+  const data = await parseResponse(response, UPDATE_MISSED_ERROR_MESSAGE)
+  const item = normalizeMissedItem(data?.item, 0)
+
+  if (!item) {
+    throw new Error(UPDATE_MISSED_ERROR_MESSAGE)
+  }
+
+  return item
 }

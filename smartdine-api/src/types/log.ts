@@ -18,4 +18,5 @@ export interface MissedQuestion {
   question: string
   createdAt: string
   convertedToKnowledge: boolean
+  handled: boolean
 }

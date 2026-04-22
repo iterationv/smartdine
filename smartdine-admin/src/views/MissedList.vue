@@ -2,14 +2,17 @@
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
 import { useLogStore } from '../stores/logStore'
 
+const router = useRouter()
 const logStore = useLogStore()
 const { missedList, missedTotal, loading, filters, currentPage, pageSize } = storeToRefs(logStore)
 
 const pageError = ref('')
 const datePreset = ref('all')
 const customDateRange = ref([])
+const actionLoadingId = ref('')
 
 const columns = [
   {
@@ -24,9 +27,21 @@ const columns = [
     width: 200,
   },
   {
+    title: '处理状态',
+    dataIndex: 'handled',
+    key: 'handled',
+    width: 140,
+  },
+  {
+    title: '转知识状态',
+    dataIndex: 'convertedToKnowledge',
+    key: 'convertedToKnowledge',
+    width: 140,
+  },
+  {
     title: '操作',
     key: 'actions',
-    width: 180,
+    width: 280,
   },
 ]
 
@@ -127,6 +142,7 @@ const handleSearch = async () => {
 const handleResetFilters = async () => {
   logStore.filters.keyword = ''
   logStore.filters.dateRange = []
+  logStore.filters.handledStatus = 'all'
   logStore.currentPage = 1
   customDateRange.value = []
   datePreset.value = 'all'
@@ -155,8 +171,40 @@ const handlePageChange = async (page) => {
   await loadMissedQuestions()
 }
 
-const handleComingSoon = () => {
-  message.info('即将上线')
+const handleTransfer = (record) => {
+  router.push({
+    name: 'knowledge-create',
+    query: {
+      question: record.question,
+      missedId: record.id,
+    },
+  })
+}
+
+const handleToggleHandled = async (record) => {
+  if (actionLoadingId.value || !record?.id) {
+    return
+  }
+
+  actionLoadingId.value = record.id
+  pageError.value = ''
+
+  try {
+    await logStore.updateMissedStatus(record.id, {
+      handled: !record.handled,
+    })
+    message.success(record.handled ? '已撤销处理状态' : '已标记为处理完成')
+  } catch (error) {
+    const nextMessage =
+      error instanceof Error && error.message
+        ? error.message
+        : '未命中问题状态更新失败，请稍后重试。'
+
+    pageError.value = nextMessage
+    message.error(nextMessage)
+  } finally {
+    actionLoadingId.value = ''
+  }
 }
 </script>
 
@@ -176,6 +224,11 @@ const handleComingSoon = () => {
         <a-radio-button value="7d">最近7天</a-radio-button>
         <a-radio-button value="custom">自定义</a-radio-button>
       </a-radio-group>
+      <a-select v-model:value="filters.handledStatus" style="width: 150px">
+        <a-select-option value="all">全部状态</a-select-option>
+        <a-select-option value="unhandled">待处理</a-select-option>
+        <a-select-option value="handled">已处理</a-select-option>
+      </a-select>
       <a-range-picker
         v-if="datePreset === 'custom'"
         v-model:value="customDateRange"
@@ -213,13 +266,37 @@ const handleComingSoon = () => {
           {{ formatDateTime(record.createdAt) }}
         </template>
 
+        <template v-else-if="column.key === 'handled'">
+          <a-tag :color="record.handled ? 'green' : 'orange'">
+            {{ record.handled ? '已处理' : '待处理' }}
+          </a-tag>
+        </template>
+
+        <template v-else-if="column.key === 'convertedToKnowledge'">
+          <a-tag :color="record.convertedToKnowledge ? 'blue' : 'default'">
+            {{ record.convertedToKnowledge ? '已转知识' : '未转化' }}
+          </a-tag>
+        </template>
+
         <template v-else-if="column.key === 'actions'">
-          <a-button class="missed-action-button" @click="handleComingSoon">
-            转为知识条目
-          </a-button>
-          <a-typography-text class="missed-action-hint" type="secondary">
-            即将上线
-          </a-typography-text>
+          <a-space wrap>
+            <a-button
+              type="link"
+              class="missed-action-link"
+              :disabled="record.convertedToKnowledge"
+              @click="handleTransfer(record)"
+            >
+              {{ record.convertedToKnowledge ? '已转知识条目' : '转为知识条目' }}
+            </a-button>
+            <a-button
+              size="small"
+              :loading="actionLoadingId === record.id"
+              :disabled="loading || (!!actionLoadingId && actionLoadingId !== record.id)"
+              @click="handleToggleHandled(record)"
+            >
+              {{ record.handled ? '撤销处理' : '标记已处理' }}
+            </a-button>
+          </a-space>
         </template>
       </template>
     </a-table>
@@ -254,23 +331,8 @@ const handleComingSoon = () => {
   white-space: pre-wrap;
 }
 
-.missed-action-button {
-  color: rgba(0, 0, 0, 0.25);
-  border-color: #d9d9d9;
-  background: #f5f5f5;
-  cursor: not-allowed;
-}
-
-.missed-action-button:hover,
-.missed-action-button:focus {
-  color: rgba(0, 0, 0, 0.25);
-  border-color: #d9d9d9;
-  background: #f5f5f5;
-}
-
-.missed-action-hint {
-  display: inline-block;
-  margin-left: 8px;
+.missed-action-link {
+  padding-inline: 0;
 }
 
 .missed-pagination {

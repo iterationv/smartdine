@@ -34,6 +34,14 @@ const routes = [
     },
   },
   {
+    path: '/knowledge/new',
+    name: 'knowledge-create',
+    component: KnowledgeListView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
     path: '/missed',
     name: 'missed-list',
     component: MissedListView,
