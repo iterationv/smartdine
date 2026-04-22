@@ -55,6 +55,7 @@ export const useChatStore = defineStore('chat', {
           createMessage('assistant', result.answer, {
             source: result.source,
             matched: normalizeMatched(result.matched),
+            related: Array.isArray(result.related) ? result.related : [],
           }),
         )
       } catch (error) {

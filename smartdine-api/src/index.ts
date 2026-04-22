@@ -13,8 +13,10 @@ import {
 import { retrieve } from './ai/retrieve.js'
 import { authMiddleware } from './middleware/auth.js'
 import { corsMiddleware } from './middleware/cors.js'
+import { readActiveKnowledgeList } from './data/knowledgeStore.js'
 import knowledgeRoutes from './routes/knowledge.js'
 import logsRoutes from './routes/logs.js'
+import suggestionsRoutes from './routes/suggestions.js'
 
 const app = new Hono()
 
@@ -167,6 +169,28 @@ const isFaqBusinessError = (error: unknown): error is Error => {
   )
 }
 
+const buildRelatedSuggestions = async (matchedId: string): Promise<string[]> => {
+  try {
+    const items = await readActiveKnowledgeList()
+    const matchedItem = items.find((item) => item.id === matchedId)
+
+    if (!matchedItem || matchedItem.tags.length === 0) {
+      return []
+    }
+
+    return items
+      .filter(
+        (item) =>
+          item.id !== matchedId &&
+          item.tags.some((tag) => matchedItem.tags.includes(tag)),
+      )
+      .slice(0, 3)
+      .map((item) => item.question)
+  } catch {
+    return []
+  }
+}
+
 app.use('*', corsMiddleware)
 
 app.get('/', (c) => {
@@ -184,6 +208,7 @@ app.get('/health', (c) => {
 
 app.route('/', knowledgeRoutes)
 app.route('/', logsRoutes)
+app.route('/', suggestionsRoutes)
 
 app.use('/chat', authMiddleware)
 app.use('/admin/faq', authMiddleware)
@@ -207,6 +232,10 @@ app.post('/chat', async (c) => {
   try {
     const result = await retrieve(question)
 
+    const related = result.matched
+      ? await buildRelatedSuggestions(result.matched.id)
+      : []
+
     return jsonUtf8(c, {
       answer: result.answer,
       source: result.source,
@@ -216,6 +245,7 @@ app.post('/chat', async (c) => {
             title: result.matched.title,
           }
         : null,
+      related,
     })
   } catch (error) {
     console.error('Failed to process /chat request:', error)

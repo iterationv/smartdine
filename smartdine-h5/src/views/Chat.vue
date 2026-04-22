@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import InputBar from '../components/InputBar.vue'
 import MessageList from '../components/MessageList.vue'
+import CategoryTab from '../components/CategoryTab.vue'
 import { useChatStore } from '../stores/chatStore'
 import { useSuggestStore } from '../stores/suggestStore'
 
@@ -13,7 +14,7 @@ const placeholder = '试着问：今天有什么好吃的？'
 const chatStore = useChatStore()
 const suggestStore = useSuggestStore()
 const { messages, loading, error } = storeToRefs(chatStore)
-const { suggestions } = storeToRefs(suggestStore)
+const { suggestions, categories, activeCategory } = storeToRefs(suggestStore)
 
 const logoPlaceholder = computed(() => {
   const name = restaurantName.trim()
@@ -30,6 +31,14 @@ const handleSend = (question) => {
 const handleSuggestionClick = (question) => {
   chatStore.sendQuestion(question)
 }
+
+const handleCategoryChange = (category) => {
+  suggestStore.setActiveCategory(category)
+}
+
+onMounted(() => {
+  suggestStore.fetchSuggestions()
+})
 </script>
 
 <template>
@@ -59,18 +68,26 @@ const handleSuggestionClick = (question) => {
 
       <div class="suggest-section">
         <p class="suggest-title">推荐问题</p>
-        <div class="suggest-grid">
+
+        <CategoryTab
+          :categories="categories"
+          :active-category="activeCategory"
+          @change="handleCategoryChange"
+        />
+
+        <div v-if="suggestions.length > 0" class="suggest-grid">
           <button
-            v-for="question in suggestions"
-            :key="question"
+            v-for="s in suggestions"
+            :key="s.question"
             type="button"
             class="suggest-card"
             :disabled="loading"
-            @click="handleSuggestionClick(question)"
+            @click="handleSuggestionClick(s.question)"
           >
-            {{ question }}
+            {{ s.question }}
           </button>
         </div>
+        <p v-else class="suggest-empty">该分类暂无推荐问题</p>
       </div>
     </section>
 
@@ -79,6 +96,7 @@ const handleSuggestionClick = (question) => {
       :messages="messages"
       :loading="loading"
       :error="error || ''"
+      @suggest="handleSuggestionClick"
     />
 
     <InputBar :loading="loading" :placeholder="placeholder" @send="handleSend" />
@@ -241,6 +259,16 @@ const handleSuggestionClick = (question) => {
 .suggest-card:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.suggest-empty {
+  margin-top: 16px;
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #94a3b8;
+  border: 1px dashed #d0d9e8;
+  border-radius: 16px;
 }
 
 @media (max-width: 480px) {

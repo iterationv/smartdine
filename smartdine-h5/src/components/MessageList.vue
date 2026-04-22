@@ -16,7 +16,11 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['suggest'])
+
 const listRef = ref(null)
+const toastVisible = ref(false)
+let toastTimer = null
 
 const scrollToBottom = () => {
   if (!listRef.value) {
@@ -40,6 +44,27 @@ const getSourceLabel = (source) => {
 
 const isMissedAnswer = (message) => {
   return message.source === 'ai_fallback' && message.matched === null
+}
+
+const hasRelated = (message) => {
+  return (
+    message.source !== 'ai_fallback' &&
+    Array.isArray(message.related) &&
+    message.related.length > 0
+  )
+}
+
+const hasCta = (message) => {
+  return message.source !== 'ai_fallback' && message.matched != null
+}
+
+const showToast = () => {
+  if (toastVisible.value) return
+  toastVisible.value = true
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastVisible.value = false
+  }, 2000)
 }
 
 watch(
@@ -76,6 +101,27 @@ watch(
             {{ getSourceLabel(message.source) }}
           </span>
         </div>
+
+        <div v-if="hasRelated(message)" class="assistant-related">
+          <p class="assistant-related-title">相关问题</p>
+          <div class="assistant-related-list">
+            <button
+              v-for="q in message.related"
+              :key="q"
+              type="button"
+              class="assistant-related-btn"
+              @click="emit('suggest', q)"
+            >
+              {{ q }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="hasCta(message)" class="assistant-cta">
+          <button type="button" class="cta-btn" @click="showToast">
+            查看详情
+          </button>
+        </div>
       </div>
     </article>
 
@@ -91,6 +137,12 @@ watch(
       </div>
     </article>
   </section>
+
+  <Transition name="toast">
+    <div v-if="toastVisible" class="toast" role="status" aria-live="polite">
+      即将上线
+    </div>
+  </Transition>
 </template>
 
 <style scoped>
@@ -206,6 +258,101 @@ watch(
   color: #2550a8;
 }
 
+/* ── 相关问题 ── */
+.assistant-related {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eaeef5;
+}
+
+.assistant-related-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.assistant-related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assistant-related-btn {
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #2f6fed;
+  background: #f0f5ff;
+  border: 1px solid #d6e4ff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.assistant-related-btn:hover {
+  background: #e0ecff;
+  border-color: #b3d0ff;
+}
+
+/* ── CTA ── */
+.assistant-cta {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cta-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2f6fed;
+  background: transparent;
+  border: 1px solid #2f6fed;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.cta-btn:hover {
+  background: #2f6fed;
+  color: #ffffff;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 40, 60, 0.85);
+  color: #ffffff;
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: 13px;
+  pointer-events: none;
+  z-index: 200;
+  white-space: nowrap;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(6px);
+}
+
+/* ── 移动端 ── */
 @media (max-width: 480px) {
   .message-list {
     padding: 14px 14px 10px;
@@ -225,6 +372,16 @@ watch(
 
   .assistant-content {
     font-size: 13px;
+  }
+
+  .assistant-related-btn {
+    font-size: 12px;
+    padding: 7px 11px;
+  }
+
+  .cta-btn {
+    font-size: 12px;
+    padding: 5px 14px;
   }
 }
 </style>
