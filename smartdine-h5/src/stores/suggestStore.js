@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { getSuggestions } from '../api/chat'
 
-// 接口失败时的硬编码兜底列表
+// 接口失败时使用本地兜底列表，问题内容保持不变，只对齐分类口径。
 const FALLBACK_SUGGESTIONS = [
-  { question: '今天有什么菜？', category: '推荐' },
-  { question: '有适合素食者的菜吗？', category: '菜品' },
-  { question: '今天的套餐是什么？', category: '推荐' },
-  { question: '有没有低卡的选择？', category: '菜品' },
-  { question: '营业时间是几点？', category: '营业时间' },
+  { question: '今天有什么菜？', category: '菜品查询' },
+  { question: '有适合素食者的菜吗？', category: '饮食需求' },
+  { question: '今天的套餐是什么？', category: '菜品查询' },
+  { question: '有没有低卡的选择？', category: '饮食需求' },
+  { question: '营业时间是几点？', category: '营业信息' },
 ]
 
 const ALL_CATEGORY = '全部'
@@ -42,7 +42,7 @@ export const useSuggestStore = defineStore('suggest', {
           this.allSuggestions = items
         }
       } catch {
-        // 接口失败静默降级，保留兜底列表
+        // 接口失败时静默降级，保留本地兜底列表。
       } finally {
         this.loading = false
       }
