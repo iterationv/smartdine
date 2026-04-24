@@ -141,3 +141,6 @@ vite.config.ts.timestamp-*
 # SmartDine runtime data
 smartdine-api/src/data/questionLogs.json
 smartdine-api/src/data/missedQuestions.json
+
+# Claude Code worktree local settings
+.claude/settings.local.json
