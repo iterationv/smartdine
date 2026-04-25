@@ -540,6 +540,15 @@ git add .
 - 测试产物目录
 - 临时阶段性配置
 
+但以下工程产物和运行产物不得进入 git：
+
+- `dist/` 构建产物
+- `test-results/`、`playwright-report/`、`coverage/` 测试产物
+- `logs/` 运行日志目录
+- `**/.last-run.json` 测试缓存文件
+
+构建或测试后必须执行 `git status --short`，确认没有把真实日志、测试缓存或构建产物带入提交。
+
 此阶段不以“仓库绝对洁癖”为目标，优先保障：
 
 - 联调效率

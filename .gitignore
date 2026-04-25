@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -19,7 +19,7 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-coverage
+coverage/
 *.lcov
 
 # nyc test coverage
@@ -80,7 +80,7 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+dist/
 
 # Gatsby files
 .cache/
@@ -141,6 +141,11 @@ vite.config.ts.timestamp-*
 # SmartDine runtime data
 smartdine-api/src/data/questionLogs.json
 smartdine-api/src/data/missedQuestions.json
+
+# SmartDine test outputs
+test-results/
+playwright-report/
+**/.last-run.json
 
 # Claude Code worktree local settings
 .claude/settings.local.json

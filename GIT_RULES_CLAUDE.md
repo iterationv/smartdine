@@ -121,6 +121,21 @@ smartdine-api/src/data/missedQuestions.json
 
 > 禁止手工修改这两个文件制造样本；只能通过真实 `/chat` 接口调用产生日志。
 
+### 构建与测试产物
+
+以下目录和文件同样不进入 git：
+
+```text
+dist/
+test-results/
+playwright-report/
+coverage/
+logs/
+**/.last-run.json
+```
+
+构建或测试后必须执行 `git status --short`。如果出现真实日志、测试缓存或构建产物脏改动，应先处理 tracking / ignore 规则，不得混入业务提交。
+
 ---
 
 ## 5. 运行环境与端口说明
