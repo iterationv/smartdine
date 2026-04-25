@@ -16,6 +16,11 @@ const navItems = [
     to: '/knowledge',
   },
   {
+    key: '/qa-events',
+    label: '问答日志',
+    to: '/qa-events',
+  },
+  {
     key: '/missed',
     label: '未命中问题',
     to: '/missed',
