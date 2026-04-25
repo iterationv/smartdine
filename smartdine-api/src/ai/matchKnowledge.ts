@@ -44,7 +44,7 @@ export async function matchKnowledge(
   })
   const bestCandidate = rerankedCandidates[0] ?? null
 
-  if (!shouldAcceptCandidate(bestCandidate)) {
+  if (!bestCandidate) {
     return null
   }
 
@@ -52,6 +52,7 @@ export async function matchKnowledge(
     item: bestCandidate.item,
     selectedCandidate: bestCandidate,
     candidates: rerankedCandidates,
+    accepted: shouldAcceptCandidate(bestCandidate),
     stage: (normalizedInput.stage ?? 'original') as RetrievalStage,
     query: normalizedInput.question,
   }

@@ -4,6 +4,14 @@ export type RetrievalStage = 'original' | 'rewritten'
 
 export type KnowledgeSearchField = 'title' | 'question' | 'alias' | 'tag'
 
+export type ConfidenceLevel = 'high' | 'low' | 'ambiguous' | 'unknown_entity'
+
+export type FallbackReason =
+  | 'low_absolute_score'
+  | 'small_gap_between_top1_top2'
+  | 'unknown_entity_in_query'
+  | null
+
 export type RetrievalReasonCode =
   | 'alias_phrase_match'
   | 'question_phrase_match'
@@ -51,8 +59,23 @@ export interface MatchKnowledgeResult {
   item: KnowledgeItem
   selectedCandidate: RetrievalCandidate
   candidates: RetrievalCandidate[]
+  accepted: boolean
   stage: RetrievalStage
   query: string
+}
+
+export interface RetrievalCandidateHint {
+  id: string
+  question: string
+}
+
+export interface RetrievalDecision {
+  confidence: ConfidenceLevel
+  fallbackReason: FallbackReason
+  unknownTokens: string[]
+  candidates: RetrievalCandidateHint[]
+  topMatchId: string | null
+  topScore: number | null
 }
 
 export interface RetrievalAttemptTraceCandidate {
@@ -78,6 +101,7 @@ export interface RetrievalTrace {
   rewrittenQuestion: string | null
   finalQuestion: string
   selectedStage: RetrievalStage | null
+  decision: RetrievalDecision
   attempts: RetrievalAttemptTrace[]
 }
 
