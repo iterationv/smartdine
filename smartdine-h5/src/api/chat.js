@@ -1,6 +1,7 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 const API_SECRET = import.meta.env.VITE_API_SECRET || ''
 const SERVICE_ERROR_MESSAGE = '当前服务暂不可用，请稍后再试。'
+const CONFIDENCE_VALUES = new Set(['high', 'low', 'ambiguous', 'unknown_entity'])
 
 const buildUrl = (path) => {
   if (!API_BASE_URL) {
@@ -47,6 +48,42 @@ const normalizeRelated = (related) => {
   return related.filter((q) => typeof q === 'string' && q.trim().length > 0)
 }
 
+const normalizeConfidence = (confidence) => {
+  return CONFIDENCE_VALUES.has(confidence) ? confidence : 'high'
+}
+
+const normalizeCandidates = (candidates) => {
+  if (!Array.isArray(candidates)) {
+    return []
+  }
+
+  return candidates
+    .map((candidate) => {
+      if (!candidate || typeof candidate !== 'object') {
+        return null
+      }
+
+      const id =
+        typeof candidate.id === 'string' && candidate.id.trim()
+          ? candidate.id.trim()
+          : ''
+      const question =
+        typeof candidate.question === 'string' && candidate.question.trim()
+          ? candidate.question.trim()
+          : ''
+
+      if (!id || !question) {
+        return null
+      }
+
+      return {
+        id,
+        question,
+      }
+    })
+    .filter(Boolean)
+}
+
 export const postChat = async (question) => {
   const normalizedQuestion = typeof question === 'string' ? question.trim() : ''
 
@@ -87,6 +124,8 @@ export const postChat = async (question) => {
     source: normalizeSource(data.source),
     matched: normalizeMatched(data.matched),
     related: normalizeRelated(data.related),
+    confidence: normalizeConfidence(data.confidence),
+    candidates: normalizeCandidates(data.candidates),
   }
 }
 

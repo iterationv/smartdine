@@ -56,6 +56,8 @@ export const useChatStore = defineStore('chat', {
             source: result.source,
             matched: normalizeMatched(result.matched),
             related: Array.isArray(result.related) ? result.related : [],
+            confidence: result.confidence,
+            candidates: Array.isArray(result.candidates) ? result.candidates : [],
           }),
         )
       } catch (error) {

@@ -1,80 +1,112 @@
-<script setup>
-import { nextTick, ref, watch } from 'vue'
-
-const props = defineProps({
-  messages: {
-    type: Array,
-    default: () => [],
+<script>
+export default {
+  name: 'MessageList',
+  props: {
+    messages: {
+      type: Array,
+      default: () => [],
+    },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+    error: {
+      type: String,
+      default: '',
+    },
   },
-  loading: {
-    type: Boolean,
-    default: false,
+  emits: ['suggest'],
+  data() {
+    return {
+      toastVisible: false,
+      toastTimer: null,
+    }
   },
-  error: {
-    type: String,
-    default: '',
+  mounted() {
+    this.scrollToBottom()
   },
-})
-
-const emit = defineEmits(['suggest'])
-
-const listRef = ref(null)
-const toastVisible = ref(false)
-let toastTimer = null
-
-const scrollToBottom = () => {
-  if (!listRef.value) {
-    return
-  }
-
-  listRef.value.scrollTop = listRef.value.scrollHeight
-}
-
-const getSourceLabel = (source) => {
-  if (source === 'knowledge' || source === 'faq') {
-    return '✓ 来自知识库'
-  }
-
-  if (source === 'ai_fallback') {
-    return '⚡ AI 回答'
-  }
-
-  return ''
-}
-
-const isMissedAnswer = (message) => {
-  return message.source === 'ai_fallback' && message.matched === null
-}
-
-const hasRelated = (message) => {
-  return (
-    message.source !== 'ai_fallback' &&
-    Array.isArray(message.related) &&
-    message.related.length > 0
-  )
-}
-
-const hasCta = (message) => {
-  return message.source !== 'ai_fallback' && message.matched != null
-}
-
-const showToast = () => {
-  if (toastVisible.value) return
-  toastVisible.value = true
-  clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => {
-    toastVisible.value = false
-  }, 2000)
-}
-
-watch(
-  () => [props.messages.length, props.loading, props.error],
-  async () => {
-    await nextTick()
-    scrollToBottom()
+  updated() {
+    this.scrollToBottom()
   },
-  { immediate: true },
-)
+  beforeUnmount() {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer)
+    }
+  },
+  methods: {
+    scrollToBottom() {
+      if (!this.$refs.listRef) {
+        return
+      }
+
+      this.$refs.listRef.scrollTop = this.$refs.listRef.scrollHeight
+    },
+    getSourceLabel(source) {
+      if (source === 'knowledge' || source === 'faq') {
+        return '✓ 来自知识库'
+      }
+
+      if (source === 'ai_fallback') {
+        return '⚡ AI 回答'
+      }
+
+      return ''
+    },
+    getConfidence(message) {
+      const confidence = message?.confidence
+      return confidence === 'low' ||
+        confidence === 'ambiguous' ||
+        confidence === 'unknown_entity'
+        ? confidence
+        : 'high'
+    },
+    isLowConfidence(message) {
+      return this.getConfidence(message) === 'low'
+    },
+    isAmbiguous(message) {
+      return this.getConfidence(message) === 'ambiguous'
+    },
+    isUnknownEntity(message) {
+      return this.getConfidence(message) === 'unknown_entity'
+    },
+    hasCandidates(message) {
+      return (
+        this.isAmbiguous(message) &&
+        Array.isArray(message?.candidates) &&
+        message.candidates.length > 0
+      )
+    },
+    shouldShowAnswerContent(message) {
+      return !this.hasCandidates(message)
+    },
+    hasRelated(message) {
+      return (
+        message.source !== 'ai_fallback' &&
+        Array.isArray(message.related) &&
+        message.related.length > 0
+      )
+    },
+    hasCta(message) {
+      return message.source !== 'ai_fallback' && message.matched != null
+    },
+    getCardClasses(message) {
+      return {
+        'assistant-card--notice': this.isUnknownEntity(message),
+      }
+    },
+    showToast() {
+      if (this.toastVisible) {
+        return
+      }
+
+      this.toastVisible = true
+      clearTimeout(this.toastTimer)
+      this.toastTimer = setTimeout(() => {
+        this.toastVisible = false
+      }, 2000)
+    },
+  },
+}
 </script>
 
 <template>
@@ -91,11 +123,41 @@ watch(
       >
         {{ message.content }}
       </div>
-      <div v-else class="assistant-card">
-        <div v-if="isMissedAnswer(message)" class="assistant-alert">
-          未找到精确答案，以下仅供参考
+      <div v-else class="assistant-card" :class="getCardClasses(message)">
+        <div v-if="isLowConfidence(message)" class="assistant-alert assistant-alert--low">
+          我不太确定：
         </div>
-        <p class="assistant-content">{{ message.content }}</p>
+        <div
+          v-else-if="isUnknownEntity(message)"
+          class="assistant-alert assistant-alert--unknown"
+        >
+          提示
+        </div>
+
+        <p
+          v-if="shouldShowAnswerContent(message)"
+          class="assistant-content"
+          :class="{ 'assistant-content--notice': isUnknownEntity(message) }"
+        >
+          {{ message.content }}
+        </p>
+
+        <div v-else class="assistant-candidates">
+          <p class="assistant-candidates-copy">{{ message.content }}</p>
+          <p class="assistant-candidates-title">你想问的是：</p>
+          <div class="assistant-candidates-list">
+            <button
+              v-for="candidate in message.candidates"
+              :key="candidate.id"
+              type="button"
+              class="assistant-candidates-btn"
+              @click="$emit('suggest', candidate.question)"
+            >
+              {{ candidate.question }}
+            </button>
+          </div>
+        </div>
+
         <div v-if="getSourceLabel(message.source)" class="assistant-footer">
           <span class="assistant-tag" :class="message.source === 'ai_fallback' ? 'assistant-tag--ai' : 'assistant-tag--knowledge'">
             {{ getSourceLabel(message.source) }}
@@ -214,15 +276,29 @@ watch(
   border-color: #f3c1c1;
 }
 
+.assistant-card--notice {
+  background: #f6f7fb;
+  border-color: #d8deea;
+}
+
 .assistant-alert {
   margin: -2px -4px 12px;
   padding: 8px 10px;
   border-radius: 12px;
-  background: #fff4e6;
-  border: 1px solid #f6c78b;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.assistant-alert--low {
+  background: #fff4e6;
+  border: 1px solid #f6c78b;
   color: #a85b00;
+}
+
+.assistant-alert--unknown {
+  background: #eef2f7;
+  border: 1px solid #d8deea;
+  color: #516070;
 }
 
 .assistant-content {
@@ -232,6 +308,57 @@ watch(
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.assistant-content--notice {
+  color: #475569;
+}
+
+.assistant-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.assistant-candidates-copy {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #516070;
+}
+
+.assistant-candidates-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.assistant-candidates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.assistant-candidates-btn {
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #2f6fed;
+  background: #f4f8ff;
+  border: 1px solid #d6e4ff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.assistant-candidates-btn:hover {
+  background: #e8f0ff;
+  border-color: #b3d0ff;
+  transform: translateY(-1px);
 }
 
 .assistant-footer {
@@ -372,6 +499,11 @@ watch(
 
   .assistant-content {
     font-size: 13px;
+  }
+
+  .assistant-candidates-copy,
+  .assistant-candidates-btn {
+    font-size: 12px;
   }
 
   .assistant-related-btn {

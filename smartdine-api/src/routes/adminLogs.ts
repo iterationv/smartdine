@@ -24,18 +24,37 @@ function parseLimit(value: string | undefined): number | undefined {
   return Number.isFinite(parsedValue) ? parsedValue : undefined
 }
 
-function parseConfidence(value: string | undefined): QaEventConfidence | undefined {
-  if (!value || !CONFIDENCE_VALUES.has(value as QaEventConfidence)) {
+function parsePage(value: string | undefined): number | undefined {
+  if (!value) {
     return undefined
   }
 
-  return value as QaEventConfidence
+  const parsedValue = Number.parseInt(value, 10)
+
+  return Number.isFinite(parsedValue) ? parsedValue : undefined
+}
+
+function parseConfidence(value: string | undefined): QaEventConfidence[] | undefined {
+  if (!value) {
+    return undefined
+  }
+
+  const items = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is QaEventConfidence =>
+      CONFIDENCE_VALUES.has(item as QaEventConfidence),
+    )
+
+  return items.length > 0 ? items : undefined
 }
 
 adminLogsRoutes.use('/api/admin/qa-events', authMiddleware)
 
 adminLogsRoutes.get('/api/admin/qa-events', async (c) => {
   const result = await queryQaEvents({
+    date: c.req.query('date'),
+    page: parsePage(c.req.query('page')),
     limit: parseLimit(c.req.query('limit')),
     confidence: parseConfidence(c.req.query('confidence')),
   })
