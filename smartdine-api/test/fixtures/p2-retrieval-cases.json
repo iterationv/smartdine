@@ -1,0 +1,488 @@
+{
+  "version": "V1.1-P2",
+  "task": "TASK-P2-04",
+  "description": "P2 recommendation and retrieval regression cases",
+  "caseCount": 48,
+  "cases": [
+    {
+      "id": "case-001",
+      "group": "normal_high_frequency",
+      "question": "今天窗口都有什么菜可以点？",
+      "expectType": "should_hit",
+      "expectResult": "k_001",
+      "expectNotContain": ["没有今日菜品", "无法提供菜单"],
+      "expectHints": ["今日菜品", "番茄牛腩", "宫保鸡丁"],
+      "note": "菜单类高频问题，应命中今日菜品知识条目。"
+    },
+    {
+      "id": "case-002",
+      "group": "normal_high_frequency",
+      "question": "今天套餐有哪几种？",
+      "expectType": "should_hit",
+      "expectResult": "k_002",
+      "expectNotContain": ["没有套餐", "不供应套餐"],
+      "expectHints": ["今日套餐", "招牌牛肉套餐", "轻食鸡胸套餐"],
+      "note": "套餐内容查询，应命中今日套餐。"
+    },
+    {
+      "id": "case-003",
+      "group": "normal_high_frequency",
+      "question": "有什么比较推荐的菜吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_003",
+      "expectNotContain": ["没有推荐", "无法推荐"],
+      "expectHints": ["推荐", "番茄牛腩", "香煎鸡排"],
+      "note": "推荐菜入口样例，供 P2-02 推荐策略回归使用。"
+    },
+    {
+      "id": "case-004",
+      "group": "normal_high_frequency",
+      "question": "中午想吃面，这里有面条吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_004",
+      "expectNotContain": ["没有面食", "不供应面"],
+      "expectHints": ["面食", "番茄鸡蛋面", "牛肉汤面"],
+      "note": "面食供应口语问法，应命中面食供应。"
+    },
+    {
+      "id": "case-005",
+      "group": "normal_high_frequency",
+      "question": "点套餐会有汤吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_005",
+      "expectNotContain": ["没有汤", "不提供汤品"],
+      "expectHints": ["汤", "紫菜蛋花汤", "玉米排骨汤"],
+      "note": "汤品相关常见问题，应命中汤品供应。"
+    },
+    {
+      "id": "case-006",
+      "group": "normal_high_frequency",
+      "question": "早上几点能进来吃饭？",
+      "expectType": "should_hit",
+      "expectResult": "k_006",
+      "expectNotContain": ["不开门", "无法确认开门"],
+      "expectHints": ["7 点", "早餐", "9:30"],
+      "note": "开门时间问法，应命中开门时间。"
+    },
+    {
+      "id": "case-007",
+      "group": "normal_high_frequency",
+      "question": "晚上最晚几点还能点餐？",
+      "expectType": "should_hit",
+      "expectResult": "k_007",
+      "expectNotContain": ["全天营业", "无法确认关门"],
+      "expectHints": ["晚上 8 点", "7:30", "点餐"],
+      "note": "关门和最晚点餐时间，应命中关门时间。"
+    },
+    {
+      "id": "case-008",
+      "group": "normal_high_frequency",
+      "question": "今天食堂开着吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_008",
+      "expectNotContain": ["今天不营业", "暂停营业"],
+      "expectHints": ["正常营业", "早餐", "午餐", "晚餐"],
+      "note": "营业状态查询，应命中今日营业状态。"
+    },
+    {
+      "id": "case-009",
+      "group": "normal_high_frequency",
+      "question": "一份套餐大概多少钱？",
+      "expectType": "should_hit",
+      "expectResult": "k_009",
+      "expectNotContain": ["免费", "无法提供价格"],
+      "expectHints": ["18", "28", "轻食套餐", "素食套餐"],
+      "note": "价格类高频问题，应命中套餐价格。"
+    },
+    {
+      "id": "case-010",
+      "group": "normal_high_frequency",
+      "question": "选好菜以后怎么结账？",
+      "expectType": "should_hit",
+      "expectResult": "k_010",
+      "expectNotContain": ["不能付款", "无需结账"],
+      "expectHints": ["收银台", "自助机", "扫码", "刷卡"],
+      "note": "付款流程问题，应命中付款流程。"
+    },
+    {
+      "id": "case-011",
+      "group": "normal_high_frequency",
+      "question": "能用微信或者支付宝付款吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_011",
+      "expectNotContain": ["不支持微信", "不支持支付宝"],
+      "expectHints": ["微信支付", "支付宝", "校园卡", "银联卡"],
+      "note": "支付方式高频问题，应命中支持支付方式。"
+    },
+    {
+      "id": "case-012",
+      "group": "normal_high_frequency",
+      "question": "素食的人有什么能吃的？",
+      "expectType": "should_hit",
+      "expectResult": "k_012",
+      "expectNotContain": ["没有素食", "只能吃荤菜"],
+      "expectHints": ["素食", "香菇青菜", "番茄豆腐"],
+      "note": "饮食需求中的素食选择，应命中素食选择。"
+    },
+    {
+      "id": "case-013",
+      "group": "normal_high_frequency",
+      "question": "想吃热量低一点，有轻食吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_013",
+      "expectNotContain": ["没有低卡", "没有轻食"],
+      "expectHints": ["低卡", "轻食鸡胸", "时蔬沙拉"],
+      "note": "低卡/轻食问法，应命中低卡选择。"
+    },
+    {
+      "id": "case-014",
+      "group": "normal_high_frequency",
+      "question": "有没有不含麸质的选择？",
+      "expectType": "should_hit",
+      "expectResult": "k_014",
+      "expectNotContain": ["全部无麸质", "保证无麸质专线"],
+      "expectHints": ["无麸质", "米饭", "清炒时蔬", "蒸蛋"],
+      "note": "无麸质需求应命中当前有限说明，不能夸大为专线。"
+    },
+    {
+      "id": "case-015",
+      "group": "normal_high_frequency",
+      "question": "菜单上会标过敏原吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_015",
+      "expectNotContain": ["没有过敏原提示", "不用确认过敏原"],
+      "expectHints": ["过敏原", "菜单牌", "窗口标签"],
+      "note": "过敏原提示查询，应命中过敏原提示。"
+    },
+    {
+      "id": "case-016",
+      "group": "normal_high_frequency",
+      "question": "可以让师傅少油少盐一点吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_016",
+      "expectNotContain": ["不能少油少盐", "只能重口味"],
+      "expectHints": ["少油少盐", "清淡", "备注"],
+      "note": "清淡口味需求，应命中少油少盐。"
+    },
+    {
+      "id": "case-017",
+      "group": "normal_high_frequency",
+      "question": "店里 WiFi 密码是多少？",
+      "expectType": "should_hit",
+      "expectResult": "k_017",
+      "expectNotContain": ["没有 WiFi", "无法联网"],
+      "expectHints": ["SmartDine-Guest", "smartdine2026"],
+      "note": "其他高频中的 WiFi 信息，应命中 WiFi 条目。"
+    },
+    {
+      "id": "case-018",
+      "group": "normal_high_frequency",
+      "question": "开车过来吃饭方便停车吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_018",
+      "expectNotContain": ["不能停车", "没有停车区"],
+      "expectHints": ["停车", "临时停车区", "限时"],
+      "note": "停车服务问题，应命中停车服务。"
+    },
+    {
+      "id": "case-019",
+      "group": "normal_high_frequency",
+      "question": "饭菜能打包带走吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_019",
+      "expectNotContain": ["不支持外带", "不能打包"],
+      "expectHints": ["外带", "打包盒", "封口"],
+      "note": "外带/打包问法，应命中外带服务。"
+    },
+    {
+      "id": "case-020",
+      "group": "normal_high_frequency",
+      "question": "能提前订好餐再过去拿吗？",
+      "expectType": "should_hit",
+      "expectResult": "k_020",
+      "expectNotContain": ["不能提前订餐", "不支持预订"],
+      "expectHints": ["提前订餐", "30 分钟", "前台"],
+      "note": "提前订餐场景，应命中提前订餐。"
+    },
+    {
+      "id": "case-021",
+      "group": "ambiguous_multi_intent",
+      "question": "今天套餐多少钱，能不能顺便打包？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["只回答套餐价格", "只回答外带"],
+      "expectHints": ["套餐价格", "外带", "候选"],
+      "note": "同时包含价格和打包意图，后续应给候选或澄清，不应只强答一个条目。"
+    },
+    {
+      "id": "case-022",
+      "group": "ambiguous_multi_intent",
+      "question": "早上几点开，晚上又到几点？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["只回答开门时间", "只回答关门时间"],
+      "expectHints": ["开门时间", "关门时间", "候选"],
+      "note": "开门和关门两个相邻意图，应提示多个候选或覆盖两者。"
+    },
+    {
+      "id": "case-023",
+      "group": "ambiguous_multi_intent",
+      "question": "微信支付、停车和 WiFi 这些都有吗？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["只回答支付方式", "只回答 WiFi"],
+      "expectHints": ["支付方式", "停车", "WiFi"],
+      "note": "三个不同高频主题混合，不应被单一支付关键词覆盖。"
+    },
+    {
+      "id": "case-024",
+      "group": "ambiguous_multi_intent",
+      "question": "我想吃清淡点，但又怕过敏，有什么能选？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["保证不过敏", "只推荐清淡菜"],
+      "expectHints": ["少油少盐", "过敏原", "确认"],
+      "note": "清淡和过敏原两个饮食需求混合，需要候选或谨慎提示。"
+    },
+    {
+      "id": "case-025",
+      "group": "ambiguous_multi_intent",
+      "question": "今天有什么菜、汤和面？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["只回答今日菜品", "只回答汤品"],
+      "expectHints": ["今日菜品", "汤品", "面食"],
+      "note": "多个菜品查询子类混合，应避免只命中一个子类。"
+    },
+    {
+      "id": "case-026",
+      "group": "ambiguous_multi_intent",
+      "question": "能先订餐然后外带，付款怎么弄？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["只回答订餐", "只回答付款流程"],
+      "expectHints": ["提前订餐", "外带", "付款流程"],
+      "note": "订餐、外带、付款流程三个操作意图混合。"
+    },
+    {
+      "id": "case-027",
+      "group": "ambiguous_multi_intent",
+      "question": "素食低卡无麸质有没有适合我的？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["保证完全适合", "只回答素食"],
+      "expectHints": ["素食", "低卡", "无麸质"],
+      "note": "多种饮食约束叠加，应谨慎给候选或提醒现场确认。"
+    },
+    {
+      "id": "case-028",
+      "group": "ambiguous_multi_intent",
+      "question": "你们这里怎么弄？",
+      "expectType": "ambiguous",
+      "expectResult": null,
+      "expectNotContain": ["确定命中支付方式", "确定命中今日菜品"],
+      "expectHints": ["请补充", "具体问题", "候选"],
+      "note": "表达过短且缺少业务实体，适合澄清或候选提示。"
+    },
+    {
+      "id": "case-029",
+      "group": "low_confidence_partial_match",
+      "question": "你们食堂支不支持火星币支付和月球外卖？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["支持火星币", "支持月球外卖"],
+      "expectHints": ["支付方式", "未知", "不确定"],
+      "note": "包含支付局部意图，但火星币和月球外卖是未知条件，不应强答支付方式。"
+    },
+    {
+      "id": "case-030",
+      "group": "low_confidence_partial_match",
+      "question": "今天推荐菜能不能顺便托管宠物？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["可以托管宠物", "支持宠物托管"],
+      "expectHints": ["推荐菜", "未知服务", "换一种问法"],
+      "note": "推荐菜局部命中，但宠物托管超出食堂 FAQ 范围。"
+    },
+    {
+      "id": "case-031",
+      "group": "low_confidence_partial_match",
+      "question": "WiFi 能连到外太空打印机吗？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["能连到外太空打印机", "支持外太空打印"],
+      "expectHints": ["WiFi", "未知设备", "不确定"],
+      "note": "WiFi 是已知主题，但外太空打印机是未知附加条件。"
+    },
+    {
+      "id": "case-032",
+      "group": "low_confidence_partial_match",
+      "question": "停车区能停直升机吗？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["可以停直升机", "支持直升机停放"],
+      "expectHints": ["停车", "临时停车区", "未知"],
+      "note": "停车服务局部命中，但直升机停放不是当前业务覆盖。"
+    },
+    {
+      "id": "case-033",
+      "group": "low_confidence_partial_match",
+      "question": "无麸质餐能不能同时做基因检测？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["提供基因检测", "支持基因检测"],
+      "expectHints": ["无麸质", "现场确认", "未知"],
+      "note": "无麸质是已知饮食需求，基因检测是未知服务。"
+    },
+    {
+      "id": "case-034",
+      "group": "low_confidence_partial_match",
+      "question": "晚上几点关门，能不能送到月球？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["送到月球", "支持月球配送"],
+      "expectHints": ["关门时间", "配送未知", "不确定"],
+      "note": "营业时间局部命中，但月球配送不能被确定回答。"
+    },
+    {
+      "id": "case-035",
+      "group": "low_confidence_partial_match",
+      "question": "素食套餐能保证治好过敏吗？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["治好过敏", "保证治疗"],
+      "expectHints": ["素食", "过敏原", "现场确认"],
+      "note": "素食和过敏原相关，但医疗治疗承诺超出 FAQ 范围。"
+    },
+    {
+      "id": "case-036",
+      "group": "low_confidence_partial_match",
+      "question": "套餐能不能用区块链报销并开宇宙发票？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["区块链报销", "宇宙发票"],
+      "expectHints": ["套餐", "付款", "未知"],
+      "note": "套餐和付款相关，但区块链报销/宇宙发票是未知附加条件。"
+    },
+    {
+      "id": "case-037",
+      "group": "fallback_unknown",
+      "question": "食堂有没有量子传送服务？",
+      "expectType": "fallback",
+      "expectResult": null,
+      "expectNotContain": ["有量子传送", "支持量子传送"],
+      "expectHints": ["暂时没有找到", "不确定", "人工确认"],
+      "note": "来自 P1 未命中日志的未知服务，应走 fallback。"
+    },
+    {
+      "id": "case-038",
+      "group": "fallback_unknown",
+      "question": "abcxxx月球火星支付",
+      "expectType": "fallback",
+      "expectResult": null,
+      "expectNotContain": ["支持月球", "支持火星"],
+      "expectHints": ["暂时没有找到", "换一种问法", "不确定"],
+      "note": "乱码和未知实体混合，不应输出确定性业务答案。"
+    },
+    {
+      "id": "case-039",
+      "group": "fallback_unknown",
+      "question": "帮我写一份求职简历",
+      "expectType": "fallback",
+      "expectResult": null,
+      "expectNotContain": ["以下是简历", "工作经历"],
+      "expectHints": ["食堂", "无法回答", "业务范围"],
+      "note": "明显超出食堂 FAQ 范围，应走 fallback。"
+    },
+    {
+      "id": "case-040",
+      "group": "fallback_unknown",
+      "question": "今天上海天气怎么样？",
+      "expectType": "fallback",
+      "expectResult": null,
+      "expectNotContain": ["晴", "下雨", "气温"],
+      "expectHints": ["食堂", "无法确认", "业务范围"],
+      "note": "天气查询不属于当前 KB 覆盖。"
+    },
+    {
+      "id": "case-041",
+      "group": "fallback_unknown",
+      "question": "比特币今天适合买入吗？",
+      "expectType": "fallback",
+      "expectResult": null,
+      "expectNotContain": ["建议买入", "投资建议"],
+      "expectHints": ["食堂", "无法回答", "业务范围"],
+      "note": "金融投资问题超出食堂 FAQ 范围。"
+    },
+    {
+      "id": "case-042",
+      "group": "fallback_unknown",
+      "question": "你们卖手机和电脑配件吗？",
+      "expectType": "fallback",
+      "expectResult": null,
+      "expectNotContain": ["卖手机", "销售电脑配件"],
+      "expectHints": ["食堂", "没有找到", "业务范围"],
+      "note": "商品零售问题不在当前食堂知识库范围。"
+    },
+    {
+      "id": "case-control-001",
+      "group": "control_out_of_scope_not_in_hint_terms",
+      "question": "你们能帮我看看相亲对象靠不靠谱吗",
+      "expectType": "unknown_entity",
+      "expectResult": null,
+      "expectNotContain": ["相亲"],
+      "expectHints": ["没有找到", "食堂相关问题"],
+      "note": "相亲不在提示词白名单内，验证算法对未枚举越权词的识别。"
+    },
+    {
+      "id": "case-control-002",
+      "group": "control_out_of_scope_not_in_hint_terms",
+      "question": "我想算个占卜星盘运势你能看看吗",
+      "expectType": "unknown_entity",
+      "expectResult": null,
+      "expectNotContain": ["占卜", "星盘", "运势"],
+      "expectHints": ["没有找到", "食堂相关问题"],
+      "note": "占卜/星盘/运势类越权问题，白名单外。"
+    },
+    {
+      "id": "case-control-003",
+      "group": "control_out_of_scope_not_in_hint_terms",
+      "question": "推荐几个好玩的网络游戏和桌游吧",
+      "expectType": "unknown_entity",
+      "expectResult": null,
+      "expectNotContain": ["游戏", "网游", "桌游"],
+      "expectHints": ["没有找到", "食堂相关问题"],
+      "note": "游戏和桌游推荐，白名单外越权。"
+    },
+    {
+      "id": "case-control-004",
+      "group": "control_out_of_scope_not_in_hint_terms",
+      "question": "今天股票大盘和基金涨还是跌",
+      "expectType": "unknown_entity",
+      "expectResult": null,
+      "expectNotContain": ["股票", "大盘", "基金"],
+      "expectHints": ["没有找到", "食堂相关问题"],
+      "note": "股市咨询，白名单外越权。"
+    },
+    {
+      "id": "case-control-005",
+      "group": "control_out_of_scope_not_in_hint_terms",
+      "question": "帮我写一段Python代码读取CSV和Excel",
+      "expectType": "unknown_entity",
+      "expectResult": null,
+      "expectNotContain": ["Python", "代码", "CSV", "Excel"],
+      "expectHints": ["没有找到", "食堂相关问题"],
+      "note": "编程协助，白名单外越权。"
+    },
+    {
+      "id": "case-low-001",
+      "group": "low_confidence_score_threshold",
+      "question": "食堂有没有神秘服务？",
+      "expectType": "low_confidence",
+      "expectResult": null,
+      "expectNotContain": ["神秘服务"],
+      "expectHints": ["不太确定", "换一种问法"],
+      "note": "弱相关、非白名单越权词，验证 LOW_CONFIDENCE_ABS_THRESHOLD = 8 能真实触发 low。"
+    }
+  ]
+}
