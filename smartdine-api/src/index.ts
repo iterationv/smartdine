@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server'
+import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { aiConfig, appConfig } from './config.js'
@@ -17,6 +18,8 @@ import { readActiveKnowledgeList } from './data/knowledgeStore.js'
 import knowledgeRoutes from './routes/knowledge.js'
 import logsRoutes from './routes/logs.js'
 import suggestionsRoutes from './routes/suggestions.js'
+import adminLogsRoutes from './routes/adminLogs.js'
+import { digestQuery, logQaEvent } from './utils/qaEvents.js'
 
 const app = new Hono()
 
@@ -209,6 +212,7 @@ app.get('/health', (c) => {
 app.route('/', knowledgeRoutes)
 app.route('/', logsRoutes)
 app.route('/', suggestionsRoutes)
+app.route('/', adminLogsRoutes)
 
 app.use('/chat', authMiddleware)
 app.use('/admin/faq', authMiddleware)
@@ -216,6 +220,8 @@ app.use('/admin/faq/*', authMiddleware)
 
 app.post('/chat', async (c) => {
   let question: string
+  const requestId = randomUUID()
+  const start = Date.now()
 
   try {
     question = await parseQuestionBody(c.req.raw)
@@ -235,6 +241,19 @@ app.post('/chat', async (c) => {
     const related = result.matched
       ? await buildRelatedSuggestions(result.matched.id)
       : []
+    const duration = Date.now() - start
+
+    logQaEvent({
+      requestId,
+      timestamp: new Date(start).toISOString(),
+      queryDigest: digestQuery(question),
+      queryLength: question.length,
+      confidence: result.confidence,
+      fallbackReason: result.fallbackReason,
+      topMatchId: result.trace.decision.topMatchId,
+      topScore: result.trace.decision.topScore,
+      duration,
+    })
 
     return jsonUtf8(c, {
       answer: result.answer,
@@ -246,6 +265,9 @@ app.post('/chat', async (c) => {
           }
         : null,
       related,
+      confidence: result.confidence,
+      fallbackReason: result.fallbackReason,
+      ...(result.candidates ? { candidates: result.candidates } : {}),
     })
   } catch (error) {
     console.error('Failed to process /chat request:', error)
