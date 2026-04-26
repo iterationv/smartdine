@@ -21,8 +21,8 @@ SmartDine V1.1 已从 P1 收口进入 P2 深化收敛阶段。P1 已完成 FAQ +
 
 P2 两份任务清单已作为当前执行依据：
 
--   `smartdine-word/SmartDine_V1.1_P2_文档级任务清单.md`
--   `smartdine-word/SmartDine_V1.1_P2_详细任务清单.md`
+-   `smartdine-word/P2/SmartDine_V1.1_P2_文档级任务清单.md`
+-   `smartdine-word/P2/SmartDine_V1.1_P2_详细任务清单.md`
 
 P2 第一轮计划：
 

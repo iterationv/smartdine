@@ -117,9 +117,9 @@ P2 定位:**让 P1 跑通的 FAQ 闭环更可信、更可运营、更干净**。
 
 P2 依据文档:
 
-- `smartdine-word/SmartDine_V1.1_P2_文档级任务清单.md` — 方向与优先级
-- `smartdine-word/SmartDine_V1.1_P2_详细任务清单.md` — 11 个 TASK 完整定义
-- `smartdine-word/SmartDine_V1.1_P2_第一轮_Codex执行任务清单.md` — **第一轮 Codex 直接执行依据**
+- `smartdine-word/P2/SmartDine_V1.1_P2_文档级任务清单.md` — 方向与优先级
+- `smartdine-word/P2/SmartDine_V1.1_P2_详细任务清单.md` — 11 个 TASK 完整定义
+- `smartdine-word/P2/SmartDine_V1.1_P2_第一轮_Codex执行任务清单.md` — **第一轮 Codex 直接执行依据**
 
 执行第一轮任务时,L1 优先读"第一轮 Codex 执行任务清单",其余两份按需 L2 触发。
 

@@ -427,8 +427,8 @@ P2 第二轮
 - `docs/ai-skills/skill-task-intake.md`
 - `docs/ai-skills/skill-codex-execution.md`
 - `docs/ai-skills/skill-acceptance-review.md`
-- `smartdine-word/SmartDine_V1.1_P2_第一轮_Codex执行任务清单.md`
-- `smartdine-word/SmartDine_V1.1_P2_详细任务清单.md`
+- `smartdine-word/P2/SmartDine_V1.1_P2_第一轮_Codex执行任务清单.md`
+- `smartdine-word/P2/SmartDine_V1.1_P2_详细任务清单.md`
 - `SmartDine_V1.1_P2_问答日志设计.md`
 - `SmartDine_V1.1_P2_问答日志验证报告.md`
 - `SmartDine_V1.1_P2_Admin问答日志页面说明.md`

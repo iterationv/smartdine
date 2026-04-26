@@ -25,9 +25,9 @@
 
 ## 4. P2 文档状态
 
-- P2 文档级任务清单：存在，路径为 `smartdine-word/SmartDine_V1.1_P2_文档级任务清单.md`。
-- P2 详细任务清单：存在，路径为 `smartdine-word/SmartDine_V1.1_P2_详细任务清单.md`。
-- P2 第一轮 Codex 执行任务清单：存在，路径为 `smartdine-word/SmartDine_V1.1_P2_第一轮_Codex执行任务清单.md`。
+- P2 文档级任务清单：存在，路径为 `smartdine-word/P2/SmartDine_V1.1_P2_文档级任务清单.md`。
+- P2 详细任务清单：存在，路径为 `smartdine-word/P2/SmartDine_V1.1_P2_详细任务清单.md`。
+- P2 第一轮 Codex 执行任务清单：存在，路径为 `smartdine-word/P2/SmartDine_V1.1_P2_第一轮_Codex执行任务清单.md`。
 - 文件命名是否统一：三份 P2 正式文档均采用 `SmartDine_V1.1_P2_...` 前缀，命名一致。
 - 是否存在旧版 / 重复版本：`fd "P2" smartdine-word -t f` 仅发现上述三份 P2 文档，未发现 v1/v2 或重复版本。
 - 建议处理：无需改名或删除；当前正式执行依据应以 `SmartDine_V1.1_P2_第一轮_Codex执行任务清单.md` 为准，后续按 TASK-P2-00 → TASK-P2-01 → TASK-P2-04 顺序推进。
