@@ -5,6 +5,7 @@ import FaqListView from '../views/Faq/List.vue'
 import FaqEditView from '../views/Faq/Edit.vue'
 import KnowledgeListView from '../views/KnowledgeList.vue'
 import MissedListView from '../views/MissedList.vue'
+import QaEventsView from '../views/QaEvents.vue'
 import { isAdminAuthenticated } from '../utils/auth'
 
 const routes = [
@@ -45,6 +46,14 @@ const routes = [
     path: '/missed',
     name: 'missed-list',
     component: MissedListView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/qa-events',
+    name: 'qa-events',
+    component: QaEventsView,
     meta: {
       requiresAuth: true,
     },
