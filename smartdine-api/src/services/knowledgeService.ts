@@ -3,6 +3,7 @@ import {
   readKnowledgeList,
   writeKnowledgeList,
 } from '../data/knowledgeStore.js'
+import { invalidateKnowledgeTokenSet } from '../ai/knowledgeTokenSet.js'
 
 export interface KnowledgeListFilters {
   status?: KnowledgeStatus
@@ -109,6 +110,7 @@ export async function createKnowledge(
   }
 
   await writeKnowledgeList([...items, newItem])
+  invalidateKnowledgeTokenSet()
 
   return newItem
 }
@@ -139,6 +141,7 @@ export async function updateKnowledge(
 
   items[targetIndex] = updatedItem
   await writeKnowledgeList(items)
+  invalidateKnowledgeTokenSet()
 
   return updatedItem
 }
@@ -163,6 +166,7 @@ export async function updateKnowledgeStatus(
 
   items[targetIndex] = updatedItem
   await writeKnowledgeList(items)
+  invalidateKnowledgeTokenSet()
 
   return updatedItem
 }
@@ -176,4 +180,5 @@ export async function deleteKnowledge(id: string): Promise<void> {
   }
 
   await writeKnowledgeList(items.filter((item) => item.id !== id))
+  invalidateKnowledgeTokenSet()
 }
