@@ -23,6 +23,11 @@ const navItems = [
     to: '/qa-events',
   },
   {
+    key: '/ai-config',
+    label: 'AI 配置',
+    to: '/ai-config',
+  },
+  {
     key: '/missed',
     label: '未命中问题',
     to: '/missed',

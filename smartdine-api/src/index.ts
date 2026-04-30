@@ -21,9 +21,13 @@ import logsRoutes from './routes/logs.js'
 import suggestionsRoutes from './routes/suggestions.js'
 import adminLogsRoutes from './routes/adminLogs.js'
 import adminAuthRoutes from './routes/adminAuth.js'
+import adminAiConfigRoutes from './routes/adminAiConfig.js'
 import { digestQuery, logQaEvent } from './utils/qaEvents.js'
+import { loadAiRuntimeConfig } from './services/aiConfigService.js'
 
 const app = new Hono()
+
+await loadAiRuntimeConfig()
 
 type ChatRequestBody = {
   question?: unknown
@@ -216,6 +220,7 @@ app.route('/', logsRoutes)
 app.route('/', suggestionsRoutes)
 app.route('/', adminLogsRoutes)
 app.route('/', adminAuthRoutes)
+app.route('/', adminAiConfigRoutes)
 
 app.use('/chat', authMiddleware)
 app.use('/admin/faq', adminJwtAuthMiddleware)

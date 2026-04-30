@@ -4,6 +4,7 @@ import type {
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions'
 import { aiConfig } from './config.js'
+import { getAiRuntimeConfig } from './services/aiConfigService.js'
 
 export interface FaqContext {
   question: string
@@ -40,10 +41,6 @@ const getClient = (): OpenAI => {
     throw new Error('AI_API_KEY is required to call LLM')
   }
 
-  if (!aiConfig.model.trim()) {
-    throw new Error('AI_MODEL is required to call LLM')
-  }
-
   if (!client) {
     client = new OpenAI(getClientOptions())
   }
@@ -53,6 +50,7 @@ const getClient = (): OpenAI => {
 
 const buildFaqPolishMessages = (
   input: AskLlmInput,
+  systemPrompt: string,
 ): ChatCompletionMessageParam[] => {
   if (!input.matchedFaq) {
     throw new Error('matchedFaq is required for FAQ polish messages')
@@ -61,8 +59,12 @@ const buildFaqPolishMessages = (
   return [
     {
       role: 'system',
-      content:
-        '你是餐饮场景的 AI 客服助手。现在已经有一条标准 FAQ 答案，你的任务是把它说得更自然、更口语化。不要改写事实，不要补充 FAQ 里没有的信息。请用中文回答，控制在 1 到 3 句话，不要使用技术术语，也不要说“根据 FAQ”之类的系统措辞。',
+      content: [
+        systemPrompt,
+        '当前已命中一条标准 FAQ 答案。请把它说得更自然、更口语化。',
+        '不要改写事实，不要补充 FAQ 里没有的信息。',
+        '请用中文回答，控制在 1 到 3 句话，不要使用技术术语，也不要说“根据 FAQ”。',
+      ].join('\n'),
     },
     {
       role: 'user',
@@ -77,12 +79,17 @@ const buildFaqPolishMessages = (
 
 const buildFallbackMessages = (
   input: AskLlmInput,
+  systemPrompt: string,
 ): ChatCompletionMessageParam[] => {
   return [
     {
       role: 'system',
-      content:
-        '你是餐饮场景的 AI 客服助手。当前没有命中的 FAQ，你只能回答餐厅服务相关、用户帮助相关的内容。不要编造未知信息，应优先给出保守、安全、可执行的引导。你可以建议用户查看首页、健康页面、记录页面，或联系人工客服。请用中文回答，控制在 1 到 3 句话，不要假装知道具体入口名称、页面细节或未确认的规则。',
+      content: [
+        systemPrompt,
+        '当前没有命中精确知识条目。你只能回答餐厅服务相关、用户帮助相关的内容。',
+        '不要编造未知信息，应优先给出保守、安全、可执行的引导。',
+        '请用中文回答，控制在 1 到 3 句话。',
+      ].join('\n'),
     },
     {
       role: 'user',
@@ -130,18 +137,25 @@ const extractTextFromResponse = (response: ChatCompletion): string => {
 }
 
 export const askLLM = async (input: AskLlmInput): Promise<string> => {
+  const runtimeConfig = getAiRuntimeConfig()
+  const modelName = runtimeConfig.modelName.trim()
+
+  if (!modelName) {
+    throw new Error('AI modelName is required to call LLM')
+  }
+
   const llmClient = getClient()
   const messages = input.matchedFaq
-    ? buildFaqPolishMessages(input)
-    : buildFallbackMessages(input)
+    ? buildFaqPolishMessages(input, runtimeConfig.systemPrompt)
+    : buildFallbackMessages(input, runtimeConfig.systemPrompt)
 
   let response: ChatCompletion
 
   try {
     response = await llmClient.chat.completions.create({
-      model: aiConfig.model,
+      model: modelName,
       messages,
-      temperature: 0.2,
+      temperature: runtimeConfig.temperature,
     })
   } catch (error) {
     throw new Error(

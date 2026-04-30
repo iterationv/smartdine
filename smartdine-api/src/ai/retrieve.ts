@@ -18,6 +18,7 @@ import {
   getKnowledgeTokenSet,
 } from './knowledgeTokenSet.js'
 import { normalizeQuestionText } from './searchText.js'
+import { getAiRuntimeConfig } from '../services/aiConfigService.js'
 
 export interface RetrieveResult {
   matched: KnowledgeItem | null
@@ -405,6 +406,42 @@ function buildFallbackAnswer(decision: RetrievalDecision): string {
   return '我不太确定你问的是不是当前知识库里的这个主题。你可以换一种问法，或者点击下面的推荐问题。'
 }
 
+function fillFallbackTemplate(
+  template: string,
+  replacements: Record<string, string>,
+): string {
+  return Object.entries(replacements).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, value),
+    template,
+  )
+}
+
+function buildConfiguredFallbackAnswer(
+  decision: RetrievalDecision,
+  matchResult: MatchKnowledgeResult | null,
+): string {
+  const { fallbackMessages } = getAiRuntimeConfig()
+
+  if (decision.confidence === 'ambiguous') {
+    return fallbackMessages.ambiguous
+  }
+
+  if (decision.confidence === 'unknown_entity') {
+    const tokens =
+      decision.unknownTokens.length > 0
+        ? decision.unknownTokens.join('、')
+        : '这个问题'
+
+    return fillFallbackTemplate(fallbackMessages.unknown_entity, {
+      tokens,
+    })
+  }
+
+  return fillFallbackTemplate(fallbackMessages.low, {
+    topic: matchResult?.item.title ?? matchResult?.item.question ?? '当前主题',
+  })
+}
+
 function selectDecisionMatch(
   originalMatch: MatchKnowledgeResult | null,
   rewrittenMatch: MatchKnowledgeResult | null,
@@ -497,7 +534,7 @@ export async function retrieve(question: string): Promise<RetrieveResult> {
     }
   }
 
-  const answer = buildFallbackAnswer(decision)
+  const answer = buildConfiguredFallbackAnswer(decision, matched)
   await saveQuestionLog({
     question,
     matchedId: null,

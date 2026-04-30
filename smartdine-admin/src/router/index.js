@@ -6,6 +6,7 @@ import FaqEditView from '../views/Faq/Edit.vue'
 import KnowledgeListView from '../views/KnowledgeList.vue'
 import MissedListView from '../views/MissedList.vue'
 import QaEventsView from '../views/QaEvents.vue'
+import AiConfigView from '../views/AiConfig.vue'
 import { isAdminAuthenticated } from '../utils/auth'
 
 const routes = [
@@ -54,6 +55,14 @@ const routes = [
     path: '/qa-events',
     name: 'qa-events',
     component: QaEventsView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/ai-config',
+    name: 'ai-config',
+    component: AiConfigView,
     meta: {
       requiresAuth: true,
     },
