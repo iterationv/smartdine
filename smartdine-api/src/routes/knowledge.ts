@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { authMiddleware } from '../middleware/auth.js'
+import { adminJwtAuthMiddleware } from '../middleware/jwtAuth.js'
 import {
   createKnowledge,
   deleteKnowledge,
@@ -57,7 +57,8 @@ const readKnowledgeBody = async (request: Request): Promise<KnowledgeBody | null
   }
 }
 
-knowledgeRoutes.use('*', authMiddleware)
+knowledgeRoutes.use('/api/knowledge', adminJwtAuthMiddleware)
+knowledgeRoutes.use('/api/knowledge/*', adminJwtAuthMiddleware)
 
 knowledgeRoutes.get('/api/knowledge', async (c) => {
   const rawStatus = c.req.query('status')

@@ -13,12 +13,14 @@ import {
 } from './faq.js'
 import { retrieve } from './ai/retrieve.js'
 import { authMiddleware } from './middleware/auth.js'
+import { adminJwtAuthMiddleware } from './middleware/jwtAuth.js'
 import { corsMiddleware } from './middleware/cors.js'
 import { readActiveKnowledgeList } from './data/knowledgeStore.js'
 import knowledgeRoutes from './routes/knowledge.js'
 import logsRoutes from './routes/logs.js'
 import suggestionsRoutes from './routes/suggestions.js'
 import adminLogsRoutes from './routes/adminLogs.js'
+import adminAuthRoutes from './routes/adminAuth.js'
 import { digestQuery, logQaEvent } from './utils/qaEvents.js'
 
 const app = new Hono()
@@ -213,10 +215,11 @@ app.route('/', knowledgeRoutes)
 app.route('/', logsRoutes)
 app.route('/', suggestionsRoutes)
 app.route('/', adminLogsRoutes)
+app.route('/', adminAuthRoutes)
 
 app.use('/chat', authMiddleware)
-app.use('/admin/faq', authMiddleware)
-app.use('/admin/faq/*', authMiddleware)
+app.use('/admin/faq', adminJwtAuthMiddleware)
+app.use('/admin/faq/*', adminJwtAuthMiddleware)
 
 app.post('/chat', async (c) => {
   let question: string

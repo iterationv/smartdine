@@ -10,6 +10,14 @@ const toPort = (value: string): number => {
   return Number.isNaN(port) ? 3000 : port
 }
 
+const toPositiveInteger = (value: string, fallbackValue: number): number => {
+  const parsedValue = Number.parseInt(value, 10)
+
+  return Number.isFinite(parsedValue) && parsedValue > 0
+    ? parsedValue
+    : fallbackValue
+}
+
 export const appConfig = {
   port: toPort(getEnv('PORT', '3000')),
   faqFilePath: getEnv('FAQ_FILE_PATH'),
@@ -28,4 +36,14 @@ export const aiConfig = {
 
 export const securityConfig = {
   apiSecret: getEnv('API_SECRET'),
+}
+
+export const adminAuthConfig = {
+  username: getEnv('ADMIN_USERNAME'),
+  passwordHash: getEnv('ADMIN_PASSWORD_HASH'),
+  jwtSecret: getEnv('ADMIN_JWT_SECRET'),
+  jwtExpiresInSeconds: toPositiveInteger(
+    getEnv('ADMIN_JWT_EXPIRES_IN', '86400'),
+    86400,
+  ),
 }

@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { authMiddleware } from '../middleware/auth.js'
+import { adminJwtAuthMiddleware } from '../middleware/jwtAuth.js'
 import {
   queryQaEvents,
   type QaEventConfidence,
@@ -49,7 +49,7 @@ function parseConfidence(value: string | undefined): QaEventConfidence[] | undef
   return items.length > 0 ? items : undefined
 }
 
-adminLogsRoutes.use('/api/admin/qa-events', authMiddleware)
+adminLogsRoutes.use('/api/admin/qa-events', adminJwtAuthMiddleware)
 
 adminLogsRoutes.get('/api/admin/qa-events', async (c) => {
   const result = await queryQaEvents({

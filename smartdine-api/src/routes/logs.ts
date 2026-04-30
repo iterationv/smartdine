@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { authMiddleware } from '../middleware/auth.js'
+import { adminJwtAuthMiddleware } from '../middleware/jwtAuth.js'
 import {
   getLogStats,
   listMissedQuestions,
@@ -78,7 +78,8 @@ const readMissedQuestionStatusBody = async (
   }
 }
 
-logsRoutes.use('*', authMiddleware)
+logsRoutes.use('/api/logs', adminJwtAuthMiddleware)
+logsRoutes.use('/api/logs/*', adminJwtAuthMiddleware)
 
 logsRoutes.get('/api/logs', async (c) => {
   try {

@@ -1,5 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
-const API_SECRET = import.meta.env.VITE_API_SECRET || ''
+import { API_BASE_URL, requestAdminJson } from './request'
 
 const KNOWLEDGE_ENDPOINT = `${API_BASE_URL}/api/knowledge`
 const LIST_ERROR_MESSAGE = '知识条目列表加载失败，请稍后重试。'
@@ -77,22 +76,7 @@ const parseResponse = async (response, fallbackMessage) => {
 }
 
 const requestKnowledge = async ({ url = KNOWLEDGE_ENDPOINT, method, body, fallbackMessage }) => {
-  let response
-
-  try {
-    response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_SECRET,
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    })
-  } catch {
-    throw new Error(fallbackMessage)
-  }
-
-  return parseResponse(response, fallbackMessage)
+  return requestAdminJson({ url, method, body, fallbackMessage })
 }
 
 const buildKnowledgePayload = (input, fallbackMessage) => {

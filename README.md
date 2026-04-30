@@ -236,15 +236,26 @@ npm run dev:ai
 -   `CORS_ORIGINS`
 -   `PORT`
 -   `FAQ_FILE_PATH`
+-   `ADMIN_USERNAME`
+-   `ADMIN_PASSWORD_HASH`
+-   `ADMIN_JWT_SECRET`
+-   `ADMIN_JWT_EXPIRES_IN`
 
 影响说明：
 
 -   缺少 `.env` 或 `.env.ai` 不一定会让 API 进程直接启动失败
 -   但会导致以下问题：
-    -   `API_SECRET` 为空时，受保护接口会返回 `401`
+    -   `API_SECRET` 为空时，H5 `/chat` 和 `/api/suggestions` 会返回 `401`
+    -   Admin 认证变量缺失时，Admin 登录或受保护管理接口会返回可诊断错误
     -   `AI_API_KEY` / `AI_MODEL` 缺失时，`/chat` 调用 LLM 会失败
     -   `PORT` 缺失时会回退到 `3000`
     -   `FAQ_FILE_PATH` 未配置时，会回退到默认 FAQ 文件
+
+Admin Secret 生成:
+
+-   `ADMIN_JWT_SECRET`: 使用 `openssl rand -base64 32`
+-   `ADMIN_PASSWORD_HASH`: 在 `smartdine-api` 目录执行 `npx tsx scripts/hash-admin-password.ts "your-admin-password"`
+-   真实 `.env*` 不进 git；如果误提交，必须先轮换 secret，再处理 git 历史
 
 FAQ 数据隔离：
 
@@ -263,14 +274,12 @@ FAQ 数据隔离：
 当前使用到的变量：
 
 -   `VITE_API_BASE_URL`
--   `VITE_API_SECRET`
 
 影响说明：
 
 -   缺少环境文件不会阻止 Vite 启动
--   但 FAQ 接口联调会受影响：
-    -   `VITE_API_SECRET` 为空时，请求会因鉴权失败返回 `401`
-    -   `VITE_API_BASE_URL` 未配置时，会回退到 `http://127.0.0.1:3000`
+-   `VITE_API_BASE_URL` 未配置时，会回退到 `http://127.0.0.1:3000`
+-   Admin 登录成功后由 API 写入 httpOnly cookie，前端请求统一携带 cookie，不再读取 `VITE_API_SECRET`
 
 ### H5
 

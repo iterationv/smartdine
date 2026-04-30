@@ -93,7 +93,12 @@ router.beforeEach((to) => {
   const isLoggedIn = isAdminAuthenticated()
 
   if (to.meta.requiresAuth && !isLoggedIn) {
-    return '/login'
+    return {
+      path: '/login',
+      query: {
+        redirect: to.fullPath,
+      },
+    }
   }
 
   if (to.path === '/login' && isLoggedIn) {

@@ -6,7 +6,7 @@ const ALLOW_HEADERS = 'Content-Type,x-api-key'
 
 const getAllowedOrigin = (origin: string | undefined): string | null => {
   if (appConfig.corsOrigins.length === 0) {
-    return '*'
+    return origin ?? '*'
   }
 
   if (origin && appConfig.corsOrigins.includes(origin)) {
@@ -30,6 +30,7 @@ const applyCorsHeaders = (response: Response, origin: string | undefined, isPriv
     response.headers.set('Access-Control-Allow-Origin', allowedOrigin)
 
     if (allowedOrigin !== '*') {
+      response.headers.set('Access-Control-Allow-Credentials', 'true')
       response.headers.set('Vary', 'Origin')
     }
   }

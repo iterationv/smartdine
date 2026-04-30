@@ -1,5 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
-const API_SECRET = import.meta.env.VITE_API_SECRET || ''
+import { API_BASE_URL, requestAdminJson } from './request'
 
 const FAQ_ENDPOINT = `${API_BASE_URL}/admin/faq`
 const LIST_ERROR_MESSAGE = 'FAQ 列表加载失败，请稍后重试。'
@@ -9,7 +8,6 @@ const DELETE_ERROR_MESSAGE = 'FAQ 删除失败，请稍后重试。'
 
 export const faqApiConfig = {
   baseUrl: API_BASE_URL,
-  apiSecret: API_SECRET,
 }
 
 const normalizeTags = (value) => {
@@ -88,22 +86,7 @@ const parseResponse = async (response, fallbackMessage) => {
 }
 
 const requestFaq = async ({ url = FAQ_ENDPOINT, method, body, fallbackMessage }) => {
-  let response
-
-  try {
-    response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_SECRET,
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    })
-  } catch {
-    throw new Error(fallbackMessage)
-  }
-
-  return parseResponse(response, fallbackMessage)
+  return requestAdminJson({ url, method, body, fallbackMessage })
 }
 
 const normalizeCreatePayload = (input) => {

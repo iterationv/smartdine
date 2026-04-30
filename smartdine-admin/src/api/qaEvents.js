@@ -1,5 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
-const API_SECRET = import.meta.env.VITE_API_SECRET || ''
+import { API_BASE_URL, requestAdminJson } from './request'
 
 const QA_EVENTS_ENDPOINT = `${API_BASE_URL}/api/admin/qa-events`
 const QA_EVENTS_ERROR_MESSAGE = '问答日志加载失败，请稍后重试。'
@@ -109,21 +108,11 @@ export const getQaEvents = async (params = {}) => {
     query.set('confidence', confidence.join(','))
   }
 
-  let response
-
-  try {
-    response = await fetch(`${QA_EVENTS_ENDPOINT}?${query.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_SECRET,
-      },
-    })
-  } catch {
-    throw new Error(QA_EVENTS_ERROR_MESSAGE)
-  }
-
-  const data = await parseResponse(response, QA_EVENTS_ERROR_MESSAGE)
+  const data = await requestAdminJson({
+    url: `${QA_EVENTS_ENDPOINT}?${query.toString()}`,
+    method: 'GET',
+    fallbackMessage: QA_EVENTS_ERROR_MESSAGE,
+  })
 
   const rawItems = Array.isArray(data?.items)
     ? data.items

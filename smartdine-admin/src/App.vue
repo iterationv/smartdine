@@ -1,8 +1,10 @@
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { logoutAdmin } from './utils/auth'
 
 const route = useRoute()
+const router = useRouter()
 
 const navItems = [
   {
@@ -30,11 +32,6 @@ const navItems = [
     label: 'FAQ 列表',
     to: '/faq',
   },
-  {
-    key: '/login',
-    label: '登录页',
-    to: '/login',
-  },
 ]
 
 const currentSection = computed(() => {
@@ -42,6 +39,13 @@ const currentSection = computed(() => {
 
   return matchedItem ? matchedItem.key : '/login'
 })
+
+const isLoginRoute = computed(() => route.path === '/login')
+
+const handleLogout = async () => {
+  await logoutAdmin()
+  await router.replace('/login')
+}
 </script>
 
 <template>
@@ -52,7 +56,7 @@ const currentSection = computed(() => {
         <span class="app-subtitle">V1.1 P0 知识运营工作台</span>
       </div>
 
-      <a-space wrap>
+      <a-space v-if="!isLoginRoute" wrap>
         <RouterLink
           v-for="item in navItems"
           :key="item.key"
@@ -62,6 +66,7 @@ const currentSection = computed(() => {
             {{ item.label }}
           </a-button>
         </RouterLink>
+        <a-button @click="handleLogout">退出登录</a-button>
       </a-space>
     </a-layout-header>
 

@@ -1,5 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
-const API_SECRET = import.meta.env.VITE_API_SECRET || ''
+import { API_BASE_URL, requestAdminJson } from './request'
 
 const MISSED_LOGS_ENDPOINT = `${API_BASE_URL}/api/logs/missed`
 const LOG_STATS_ENDPOINT = `${API_BASE_URL}/api/logs/stats`
@@ -37,21 +36,12 @@ const parseResponse = async (response, fallbackMessage) => {
 
 const requestMissedLogs = async (queryString) => {
   const requestUrl = queryString ? `${MISSED_LOGS_ENDPOINT}?${queryString}` : MISSED_LOGS_ENDPOINT
-  let response
 
-  try {
-    response = await fetch(requestUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_SECRET,
-      },
-    })
-  } catch {
-    throw new Error(MISSED_ERROR_MESSAGE)
-  }
-
-  return parseResponse(response, MISSED_ERROR_MESSAGE)
+  return requestAdminJson({
+    url: requestUrl,
+    method: 'GET',
+    fallbackMessage: MISSED_ERROR_MESSAGE,
+  })
 }
 
 const normalizeMissedItem = (item, index) => {
@@ -121,21 +111,11 @@ export const getLogStats = async (range = '7d') => {
   const query = new URLSearchParams()
   query.set('range', normalizeStatsRange(range))
 
-  let response
-
-  try {
-    response = await fetch(`${LOG_STATS_ENDPOINT}?${query.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_SECRET,
-      },
-    })
-  } catch {
-    throw new Error(STATS_ERROR_MESSAGE)
-  }
-
-  const data = await parseResponse(response, STATS_ERROR_MESSAGE)
+  const data = await requestAdminJson({
+    url: `${LOG_STATS_ENDPOINT}?${query.toString()}`,
+    method: 'GET',
+    fallbackMessage: STATS_ERROR_MESSAGE,
+  })
 
   if (!data || !Array.isArray(data.topQuestions)) {
     throw new Error(STATS_ERROR_MESSAGE)
@@ -207,22 +187,12 @@ export const updateMissedQuestion = async (id, input = {}) => {
     throw new Error(UPDATE_MISSED_ERROR_MESSAGE)
   }
 
-  let response
-
-  try {
-    response = await fetch(`${MISSED_LOGS_ENDPOINT}/${encodeURIComponent(normalizedId)}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_SECRET,
-      },
-      body: JSON.stringify(body),
-    })
-  } catch {
-    throw new Error(UPDATE_MISSED_ERROR_MESSAGE)
-  }
-
-  const data = await parseResponse(response, UPDATE_MISSED_ERROR_MESSAGE)
+  const data = await requestAdminJson({
+    url: `${MISSED_LOGS_ENDPOINT}/${encodeURIComponent(normalizedId)}`,
+    method: 'PATCH',
+    body,
+    fallbackMessage: UPDATE_MISSED_ERROR_MESSAGE,
+  })
   const item = normalizeMissedItem(data?.item, 0)
 
   if (!item) {
