@@ -7,6 +7,8 @@ export interface KnowledgeItem {
   answer: string
   aliases: string[]
   tags: string[]
+  priority?: number | null
+  popularity?: number | null
   status: KnowledgeStatus
   createdAt: string
   updatedAt: string

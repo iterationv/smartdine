@@ -3,7 +3,13 @@ const API_SECRET = import.meta.env.VITE_API_SECRET || ''
 
 const QA_EVENTS_ENDPOINT = `${API_BASE_URL}/api/admin/qa-events`
 const QA_EVENTS_ERROR_MESSAGE = '问答日志加载失败，请稍后重试。'
-const CONFIDENCE_VALUES = new Set(['high', 'low', 'ambiguous', 'unknown_entity'])
+export const QA_EVENT_CONFIDENCE_VALUES = [
+  'high',
+  'low',
+  'ambiguous',
+  'unknown_entity',
+]
+const CONFIDENCE_VALUES = new Set(QA_EVENT_CONFIDENCE_VALUES)
 
 const getErrorMessage = (payload, fallbackMessage) => {
   if (payload && typeof payload.message === 'string' && payload.message.trim()) {
@@ -35,6 +41,22 @@ const parseResponse = async (response, fallbackMessage) => {
 
 const normalizeConfidence = (value) => {
   return CONFIDENCE_VALUES.has(value) ? value : 'unknown_entity'
+}
+
+const normalizePositiveInteger = (value, fallbackValue) => {
+  return Number.isInteger(value) && value > 0 ? value : fallbackValue
+}
+
+const normalizeConfidenceParams = (value) => {
+  if (Array.isArray(value)) {
+    return [...new Set(value.filter((item) => CONFIDENCE_VALUES.has(item)))]
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return [...new Set(value.split(',').map((item) => item.trim()).filter((item) => CONFIDENCE_VALUES.has(item)))]
+  }
+
+  return []
 }
 
 const normalizeQaEvent = (item, index) => {
@@ -72,12 +94,19 @@ const normalizeQaEvent = (item, index) => {
 
 export const getQaEvents = async (params = {}) => {
   const query = new URLSearchParams()
-  const limit = Number.isInteger(params.limit) && params.limit > 0 ? params.limit : 20
+  const page = normalizePositiveInteger(params.page, 1)
+  const limit = Math.min(normalizePositiveInteger(params.limit, 20), 100)
+  const confidence = normalizeConfidenceParams(params.confidence)
 
+  query.set('page', String(page))
   query.set('limit', String(limit))
 
-  if (CONFIDENCE_VALUES.has(params.confidence)) {
-    query.set('confidence', params.confidence)
+  if (typeof params.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.date.trim())) {
+    query.set('date', params.date.trim())
+  }
+
+  if (confidence.length > 0 && confidence.length < QA_EVENT_CONFIDENCE_VALUES.length) {
+    query.set('confidence', confidence.join(','))
   }
 
   let response
@@ -96,12 +125,24 @@ export const getQaEvents = async (params = {}) => {
 
   const data = await parseResponse(response, QA_EVENTS_ERROR_MESSAGE)
 
-  if (!data || !Array.isArray(data.list)) {
+  const rawItems = Array.isArray(data?.items)
+    ? data.items
+    : Array.isArray(data?.list)
+      ? data.list
+      : null
+
+  if (!rawItems) {
     throw new Error(QA_EVENTS_ERROR_MESSAGE)
   }
 
+  const items = rawItems.map(normalizeQaEvent).filter(Boolean)
+
   return {
-    list: data.list.map(normalizeQaEvent).filter(Boolean),
+    items,
+    list: items,
     total: Number.isInteger(data.total) ? data.total : 0,
+    page: Number.isInteger(data.page) ? data.page : page,
+    limit: Number.isInteger(data.limit) ? data.limit : limit,
+    date: typeof data.date === 'string' ? data.date : params.date || '',
   }
 }
